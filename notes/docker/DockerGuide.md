@@ -1,33 +1,63 @@
+# Table of contents
+
+- [Docker](#docker)
+    - [Difference between containerization and virtualization(vm's)](#difference-between-containerization-and-virtualizationvms)
+    - [VM vs Docker](#vm-vs-docker)
+    - [Architecture](#architecture)
+    - [Docker installation in linux](#docker-installation-in-linux)
+    - [Some important Docker Commands](#some-important-docker-commands)
+    - [Docker File](#docker-file)
+        - [Docker build](#docker-build)
+        - [Keywords in Dockerfile](#keywords-in-dockerfile)
+        - [Run a docker file](#run-a-docker-file)
+    - [Docker Volumes](#docker-volumes)
+        - [Types of volumes](#types-of-volumes)
+    - [Docker Security](#docker-security)
+        - [Manage docker as a non-root user](#manage-docker-as-a-non-root-user)
+    - [DockerFile best practices](#dockerfile-best-practices)
+        - [Privileged vs Non-Privileged containers](#privileged-vs-non-privileged-containers)
+    - [DockerCompose](#dockercompose)
+
 ## Docker
-Docker is a containerization tool designed to make the devops (dev and ops) teams easier to deploy and run applications by bundling them into containers.Containers allow us to package the application with all of its dependencies which can be run on any platform/environment and Docker follows the concept of containerization.A docker container is a crazy fast light-weight microcomputers, which replace the traditional Virtual Machines.
+
+Docker is a containerization tool designed to make the devops (dev and ops) teams easier to deploy and run applications
+by bundling them into containers.Containers allow us to package the application with all of its dependencies which can
+be run on any platform/environment and Docker follows the concept of containerization.A docker container is a crazy fast
+light-weight microcomputers, which replace the traditional Virtual Machines.
 
 ### Difference between containerization and virtualization(vm's)
 
-The concept of VM's involves multiple guest OS running on the Host OS.So if you develop an application on a VM,then that application uses the libraries and dependencies present on that VM only.The allocation of resources in a vm is done by something called as Hypervisor.Hypervisor takes a portion of our servers resources and allows us to run multiple guest OS.
-In containerization,containers share the same OS.There is no Guest OS.That is the libraries and dependencies are that of the Host OS,So processing is faster in case of containerization when compared to virtualization.
+The concept of VM's involves multiple guest OS running on the Host OS.So if you develop an application on a VM,then that
+application uses the libraries and dependencies present on that VM only.The allocation of resources in a vm is done by
+something called as Hypervisor.Hypervisor takes a portion of our servers resources and allows us to run multiple guest
+OS. In containerization,containers share the same OS.There is no Guest OS.That is the libraries and dependencies are
+that of the Host OS,So processing is faster in case of containerization when compared to virtualization.
 
-In one line virtualization (vm's) virtualize the hardware/resources(cpu,ram etc) and containerization virtualizes the OS.
+In one line virtualization (vm's) virtualize the hardware/resources(cpu,ram etc) and containerization virtualizes the
+OS.
 
 ### VM vs Docker
 
-type       -     VM          Docker
-Resources  -     hypervisor  docker engine
-Space      -     more space  Less space
-speed      -     slow        faster
-integration-     no          yes
+type - VM Docker Resources - hypervisor docker engine Space - more space Less space speed - slow faster integration- no
+yes
 
 ![img.png](../images/dockervsvm.png)
 
 ### Architecture
-1. It follows client-server architecture.Here client is the command line argument and server is the docker daemon which can run different docker containers.
-2. Once docker  is installed in your Linux system,we need to write a docker file which is built to create a docker image .This image is run to create a docker container.
-3. Docker containers are the running instances of docker images.These images cane be pulled from a repository called docker hub or can be build from a docker file.
-   All these pull/push/build instructions can be given to docker through cli and the docker daemon executes the instructions on the server. 
+
+1. It follows client-server architecture.Here client is the command line argument and server is the docker daemon which
+   can run different docker containers.
+2. Once docker is installed in your Linux system,we need to write a docker file which is built to create a docker image
+   .This image is run to create a docker container.
+3. Docker containers are the running instances of docker images.These images cane be pulled from a repository called
+   docker hub or can be build from a docker file. All these pull/push/build instructions can be given to docker through
+   cli and the docker daemon executes the instructions on the server.
 4. So multiple members from an organization can share an image by pushing it into docker hub.
 
 ![img.png](../images/docker-architecture.png)
 
 ### Docker installation in linux
+
 ```
 step 1:
 ------
@@ -57,7 +87,9 @@ sudo service docker stop
 ```
 
 ### Some important Docker Commands
-1. List all containers 
+
+1. List all containers
+
 ```commandline
 docker ps -a   
 
@@ -78,6 +110,7 @@ root@ubuntu:/home/kmaster#
 ```
 
 2. List all images
+
 ```commandline
 docker images 
 
@@ -109,6 +142,7 @@ bin    dev    etc    home   lib    media  mnt    opt    proc   root   run    sbi
 ```
 
 4. Stop a running container
+
 ```commandline
 docker stop <conatiner id>
 docker stop $(docker ps -a -q) --to stop all conatiners
@@ -119,14 +153,16 @@ c0756736a1ee
 root@ubuntu:/home/kmaster#
 ```
 
-5. Build image form a docker file 
+5. Build image form a docker file
+
 ```commandline
 docker build -t <image_name>:<tag> <dockerfile -- location or build context>
 docker build -t base_test -f base/Dockerfile   -- if file is is other location
 
 ```
 
-6. Remove image 
+6. Remove image
+
 ```commandline
 docker rmi <image_name>:<tag_name>
 
@@ -138,13 +174,15 @@ root@ubuntu:/home/kmaster#
 ```
 
 7. Save an image as a tar file for shipping
+
 ```commandline
 docker save <image_name>> | gzip > <tar_name>>.tar.gz
 
 root@ubuntu:/home/kmaster# docker save base_image:v0.2.13 | gzip > base_image_v_0_1_13.tar.gz
 ```
- 
+
 8. Load an image back into local
+
 ```commandline
 docker load <tar_name>>
 ```
@@ -162,12 +200,14 @@ IMAGE          CREATED         CREATED BY                                      S
 ```
 
 10. To rename and push the image into container registry
+
 ```commandline
 docker tag myimage:1.0  myrepo/myimage:2.0  -- rename and tag to a newer name
 docker push myrepo/myimage:2.0              -- push the image to docker hub/any other registry
 ```
 
 11. To check container logs
+
 ```commandline
 docker logs --tail 10 <conatiner_id>  
 
@@ -181,16 +221,26 @@ I1208 06:13:35.124883       1 event.go:294] "Event occurred" object="kube-system
 ```
 
 ### Docker File
-This file contains instructions for building a docker image.Docker file is a text file where you write the instructions needed to build a docker image.Docker can build images automatically by reading the instructions from a Dockerfile.
+
+This file contains instructions for building a docker image.Docker file is a text file where you write the instructions
+needed to build a docker image.Docker can build images automatically by reading the instructions from a Dockerfile.
 
 #### Docker build
+
 ```
 docker build -t <image_name:tag_name> <Dockerfile location or build context>
 docker build -t base_test -f base/Dockerfile .	--if file is is other location
 ```
-1. The build will be done by docker daemon.Before the Docker daemon runs the instructions in the Dockerfile, it performs a preliminary validation of the Dockerfile and returns an error if the syntax is incorrect.
-2. When you issue a docker build command, the current working directory is the build context. By default, the Dockerfile is assumed to be located here, but you can specify a different location with the file flag (-f). Regardless of where the Dockerfile actually lives, all recursive contents of files and directories in the current directory are sent to the Docker daemon as the build context.
-3. The Docker daemon runs the instructions in the Dockerfile one-by-one, committing the result of each instruction to a new image if necessary, before finally outputting the ID of your new image. The Docker daemon will automatically clean up the context you sent.
+
+1. The build will be done by docker daemon.Before the Docker daemon runs the instructions in the Dockerfile, it performs
+   a preliminary validation of the Dockerfile and returns an error if the syntax is incorrect.
+2. When you issue a docker build command, the current working directory is the build context. By default, the Dockerfile
+   is assumed to be located here, but you can specify a different location with the file flag (-f). Regardless of where
+   the Dockerfile actually lives, all recursive contents of files and directories in the current directory are sent to
+   the Docker daemon as the build context.
+3. The Docker daemon runs the instructions in the Dockerfile one-by-one, committing the result of each instruction to a
+   new image if necessary, before finally outputting the ID of your new image. The Docker daemon will automatically
+   clean up the context you sent.
 
 Note that each instruction is run independently, and causes a new image to be created.Example shown below:
 
@@ -204,9 +254,10 @@ IMAGE          CREATED         CREATED BY                                      S
 
 ```
 
-### Keywords in Dockerfile
+#### Keywords in Dockerfile
 
 Docker file contains comments,commands and arguments
+
 ```commandline
 1.  FROM- specifies the base docker image.All other customizations will be on top of base image.The base image can be an existing open-source image or a custom image
 EX: FROM <image_name>
@@ -259,46 +310,64 @@ EX:MAINTAINER <author>//non executing command
 EX:VOLUME ["/dir_1","dir_2"...]
 
 ```
+
 An example with all the instructions above are present in the code/docker/services folder.
 
-### Run a docker file
+#### Run a docker file
+
 Below is the complete command to run a docker container with all the options
+
 ```
 docker run -rm -it  -d -e key=value -p outer:inner -v host_path:conatiner_path <image_name> bash
 ```
-1. When you start a container with docker run, behind the scenes Docker creates a set of namespaces and control groups for the container.
-2. Namespaces provide  straightforward form of isolation: processes running within a container cannot see, and even less affect, processes running in another container, or in the host system.
-3. Control Groups are another key component of Linux Containers. They implement resource accounting and limiting. They provide many useful metrics, but they also help ensure that each container gets its fair share of memory, CPU, disk I/O; and, more importantly, that a single container cannot bring the system down by exhausting one of those resources.
 
+1. When you start a container with docker run, behind the scenes Docker creates a set of namespaces and control groups
+   for the container.
+2. Namespaces provide straightforward form of isolation: processes running within a container cannot see, and even less
+   affect, processes running in another container, or in the host system.
+3. Control Groups are another key component of Linux Containers. They implement resource accounting and limiting. They
+   provide many useful metrics, but they also help ensure that each container gets its fair share of memory, CPU, disk
+   I/O; and, more importantly, that a single container cannot bring the system down by exhausting one of those
+   resources.
 
-## Docker Volumes
-Docker volumes are used for data persistence.Whenever we spin up a docker container using a simple docker run command for ex:
+### Docker Volumes
+
+Docker volumes are used for data persistence.Whenever we spin up a docker container using a simple docker run command
+for ex:
 ```docker run --name nginx-image --image nginx```
-docker creates a directory in /var/lib/docker/volumes/<hash>/<volname>/data on the host machine where the container data is stored. When the container is removed the directory is also deleted.
-If we don't want data to be deleted if the docker container crashes, we use docker volumes. By using docker volumes we are mounting a directory on the host machine to a directory in container so that even if the container is removed the data still persists on the host and when the container is restarted again the data is available as it is.
-Ex: Volumes are mostly used when we are working with Database containers where we dont want to loose the data even though the container is lost
+docker creates a directory in /var/lib/docker/volumes/<hash>/<volname>/data on the host machine where the container data
+is stored. When the container is removed the directory is also deleted. If we don't want data to be deleted if the
+docker container crashes, we use docker volumes. By using docker volumes we are mounting a directory on the host machine
+to a directory in container so that even if the container is removed the data still persists on the host and when the
+container is restarted again the data is available as it is. Ex: Volumes are mostly used when we are working with
+Database containers where we dont want to loose the data even though the container is lost
 
-### Types of volumes
+#### Types of volumes
+
 1. anonymous volumes: docker run -v /data01 -docker managed
 2. named volume: docker run -v db_data:/data01 - docker managed (prefered)
 3. bind volumes/mount : docker run -v /opt/data02:/data01 --not managed by docker
 
+### Docker Security
 
-## Docker Security
- Docker containers and hosts share the same kernel but are isolated from each other as they run in their own namespace.The host has a namespace and containers have their own namespace. 
- You can use a user to create a container instead of allowing the operations inside a container as root.
+Docker containers and hosts share the same kernel but are isolated from each other as they run in their own
+namespace.The host has a namespace and containers have their own namespace. You can use a user to create a container
+instead of allowing the operations inside a container as root.
 
+#### Manage docker as a non-root user:
 
-### Manage docker as a non-root user:
 Whenever you try to run commands using non-root user,you will see the below error and that's because you are non-root.
+
 ```commandline
 kmaster@ubuntu:~$ docker ps
 Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.24/containers/json: dial unix /var/run/docker.sock: connect: permission denied
 kmaster@ubuntu:~$
 ```
+
 Solution:
 To create the docker group and add your user:
 Create the docker group.
+
 ```
 $ sudo groupadd docker
 Add your user to the docker group.
@@ -307,44 +376,61 @@ $ sudo usermod -aG docker $USER
 Log out and log back in so that your group membership is re-evaluated.
 ```
 
+### DockerFile best practices:
 
-## DockerFile best practices:
 1. Use base images with tags
 2. Dont install unnecessary packages using apt-get
 3. Use multistage builds to reduce the size of the image.
 4. Run the docker container as a non-root user
 
-Docker containers typically run with root privileges by default. This allows for unrestricted container management, which means you can do things like install system packages, edit config files, bind privileged ports, etc. This is really useful for development purposes, but can expose you to high risk once you put your containers into a production environment.
+Docker containers typically run with root privileges by default. This allows for unrestricted container management,
+which means you can do things like install system packages, edit config files, bind privileged ports, etc. This is
+really useful for development purposes, but can expose you to high risk once you put your containers into a production
+environment.
 
-Docker Model suggests that it is better to run a single service within a container. If you wanted to build an application that required an Apache service and a MariaDB database, you should generate two different containers.
-Thus docker doesn’t need systemd which is tool for monitoring multiple services.Thus it is disabled by default and to enhance security and isolation to container and its service.
+Docker Model suggests that it is better to run a single service within a container. If you wanted to build an
+application that required an Apache service and a MariaDB database, you should generate two different containers. Thus
+docker doesn’t need systemd which is tool for monitoring multiple services.Thus it is disabled by default and to enhance
+security and isolation to container and its service.
 
-Any linux Process with PID 1 acts as the Entrypoint of the container or simply you can say it is the first process invoked by the kernel.In modern systems PID 1 is actively reserved for the init process but not in docker.
+Any linux Process with PID 1 acts as the Entrypoint of the container or simply you can say it is the first process
+invoked by the kernel.In modern systems PID 1 is actively reserved for the init process but not in docker.
 
-### Privileged vs Non-Privileged containers:
+#### Privileged vs Non-Privileged containers:
 
-A privileged container has all the capabilities a host can perform. And that’s a bad idea.
-To prevent security issues, it is recomended that you do not run privileged containers in your environment. Instead, provide granular permissions and capabilities to the container environment. Giving containers full access to the host can create security flaws in your production environment. This is the reason that, by default, containers are “unprivileged” and cannot access all the devices in the host.Running a privileged container is different from running a container using the user root inside it, which should also be avoided. 
+A privileged container has all the capabilities a host can perform. And that’s a bad idea. To prevent security issues,
+it is recomended that you do not run privileged containers in your environment. Instead, provide granular permissions
+and capabilities to the container environment. Giving containers full access to the host can create security flaws in
+your production environment. This is the reason that, by default, containers are “unprivileged” and cannot access all
+the devices in the host.Running a privileged container is different from running a container using the user root inside
+it, which should also be avoided.
 
 Changing the configuration of your containers to make them run as non-root adds an extra layer of security.
 Example1 : https://medium.com/jobteaser-dev-team/docker-user-best-practices-a8d2ca5205f4
 Example2 : https://www.docker.com/blog/intro-guide-to-dockerfile-best-practices/
 
-NOTE: The root user capabilities are not same as the container root user capabilities,bot of them are different from each other.
+NOTE: The root user capabilities are not same as the container root user capabilities,bot of them are different from
+each other.
 
-## DockerCompose
+### DockerCompose
 
-Compose is a tool for defining and running multi-container Docker applications. With Compose, you use a YAML file to configure your application’s services. Then, with a single command, you create and start all the services from your configuration
+Compose is a tool for defining and running multi-container Docker applications. With Compose, you use a YAML file to
+configure your application’s services. Then, with a single command, you create and start all the services from your
+configuration
 
 Using Compose is basically a three-step process:
- 1. Define your app’s environment with a Dockerfile so it can be reproduced anywhere.
- 2. Define the services that make up your app in docker-compose.yml so they can be run together in an isolated environment.
- 3. Run docker-compose up and Compose starts and runs your entire app.
+
+1. Define your app’s environment with a Dockerfile so it can be reproduced anywhere.
+2. Define the services that make up your app in docker-compose.yml so they can be run together in an isolated
+   environment.
+3. Run docker-compose up and Compose starts and runs your entire app.
 
 ```
 docker-compose up -d ---for staring containers
 docker-copose down --for stopping and removing all containers
 ```
-### docker compose for services
+
+#### docker compose for services
+
 Refer to docker-compose.yml in code folder for example
 		

@@ -1,9 +1,12 @@
 # Container Orchestration
 
-Automatically deploying and managing containers is called Container Orchestration.It automates the deployment, management, scaling, and networking of containers. Examples of Container Orchestration Technologies are:
+Automatically deploying and managing containers is called Container Orchestration.It automates the deployment,
+management, scaling, and networking of containers. Examples of Container Orchestration Technologies are:
+
 1. Docker Swarm
 2. Kubernetes
 3. Mesos
+The blow document consists of Kubernetes notes/cheat sheet and all the important concepts related to CKAD Certification
 
 # Table of contents
 
@@ -13,32 +16,32 @@ Automatically deploying and managing containers is called Container Orchestratio
     - [Components of kubernetes Control plane](#components-of-kubernetes-control-plane)
     - [Internal working](#internal-working)
     - [PODs](#pods)
-      - [Example](#example)
-      - [Some Pod commands](#some-pod-commands)
-      - [MultiContainer Pods](#multicontainer-pods)
+        - [Example](#example)
+        - [Some Pod commands](#some-pod-commands)
+        - [MultiContainer Pods](#multicontainer-pods)
     - [Replica Sets](#replica-sets)
-      - [Example](#example)
-      - [Some ReplicaSet Commands](#some-replicaset-commands)
+        - [Example](#example)
+        - [Some ReplicaSet Commands](#some-replicaset-commands)
     - [Deployments](#deployments)
-      - [Example](#example)
-      - [Some Deployment Commands](#some-deployment-commands)
+        - [Example](#example)
+        - [Some Deployment Commands](#some-deployment-commands)
     - [Namespaces in kubernetes](#namespaces-in-kubernetes)
-      - [Example](#example)
-      - [Some Namespace Commands](#some-namespace-commands)
+        - [Example](#example)
+        - [Some Namespace Commands](#some-namespace-commands)
     - [Environment Variables](#environment-variables)
-      - [Plain key-value](#plain-key-value)
-      - [Config Maps](#config-maps)
-      - [Secrets](#secrets)
+        - [Plain key-value](#plain-key-value)
+        - [Config Maps](#config-maps)
+        - [Secrets](#secrets)
     - [Security Context in Kubernetes](#security-context-in-kubernetes)
     - [Resource Requirements](#resource-requirements)
     - [Taints and Toleration](#taints-and-toleration)
-      - [Taint commands example](#taint-commands-example)
+        - [Taint commands example](#taint-commands-example)
     - [Node Selectors and Node Affinity](#node-selectors-and-node-affinity)
-  
 
 # Kubernetes
 
 ### Definition
+
 Kubernetes is a portable, extensible, open-source platform for deploying and managing containerized workloads and
 services, that facilitates both declarative configuration and automation. Containers are a good way to bundle and run
 your applications. In a production environment, you need to manage the containers that run the applications and ensure
@@ -961,7 +964,9 @@ spec:
 
 The resource req. consists of cpu,mem nd disk.By default kubernetes assumes the default values of the resources required
 by the container are 0.5 cpu,256Mi mem ,10gi Disk In docker world, a docker container has no limit to the resources
-consumed by the container. But in kubernetes we can set the limit for a particular pod.If a pod exceeds the specified limit,kubernetes throttles the cpu,but doesn't stop the mem usage and if thw pod uses more memory than configured,it deletes the pod.  
+consumed by the container. But in kubernetes we can set the limit for a particular pod.If a pod exceeds the specified
+limit,kubernetes throttles the cpu,but doesn't stop the mem usage and if thw pod uses more memory than configured,it
+deletes the pod.
 
 Example:
 
@@ -990,16 +995,21 @@ spec:
 ```
 
 ### Taints and Toleration
-Taints and Toleration are used to set restrictions/limitations on what pods can be scheduled on the nodes.
-1. By default, pods cannot tolerate a taint on a node unless we add a toleration to a pod,so that it can be scheduled on that particular node.
-NOTE: Taints are set on nodes and tolerations are set on pods.
 
-2. Taints and tolerations only tell the nodes to accept certain type of pods but not the other way around i.e.., a pod with toleration can go into a node without any taint but a node with a taint can't accept a pod without a toleration.
-3. When a kubernetes cluster is first setup a taint is set on the master automatically that prevents any pod from getting scheduled on the master.
+Taints and Toleration are used to set restrictions/limitations on what pods can be scheduled on the nodes.
+
+1. By default, pods cannot tolerate a taint on a node unless we add a toleration to a pod,so that it can be scheduled on
+   that particular node. NOTE: Taints are set on nodes and tolerations are set on pods.
+
+2. Taints and tolerations only tell the nodes to accept certain type of pods but not the other way around i.e.., a pod
+   with toleration can go into a node without any taint but a node with a taint can't accept a pod without a toleration.
+3. When a kubernetes cluster is first setup a taint is set on the master automatically that prevents any pod from
+   getting scheduled on the master.
 
 #### Taint commands example
 
 1. Taint a node
+
 ```commandline
 root@controlplane:~# kubectl taint nodes node01 key=value:NoSchedule
 node/node01 tainted
@@ -1037,16 +1047,16 @@ metadata:
   name: bee
 spec:
   containers:
-  - image: nginx
-    name: bee
-    resources: {}
+    - image: nginx
+      name: bee
+      resources: { }
   dnsPolicy: ClusterFirst
   restartPolicy: Always
   tolerations: #values must be same as the taint definition
-      - key: "spray"
-        value: "mortein"
-        operator: "Equal"
-        effect: "NoSchedule"
+    - key: "spray"
+      value: "mortein"
+      operator: "Equal"
+      effect: "NoSchedule"
 ```
 
 5. check if any taint exists on the node
@@ -1058,7 +1068,9 @@ Taints:             node-role.kubernetes.io/master:NoSchedule
 
 ### Node Selectors and Node Affinity
 
-Some times you want your app to run on the nodes having higher configurations so that the jo doesn't fail.In such cases you need to label the nodes and then use node selectors in your pod definition files to schedule the pod on that particular node
+Some times you want your app to run on the nodes having higher configurations so that the jo doesn't fail.In such cases
+you need to label the nodes and then use node selectors in your pod definition files to schedule the pod on that
+particular node
 
 1. To label a node
 
@@ -1069,7 +1081,7 @@ root@controlplane:~# kubectl label nodes controlplane size=Large
 node/controlplane labeled
 ```
 
-2. Show all labels on  a node
+2. Show all labels on a node
 
 ```commandline
 kubectl get nodes node_name --show-labels
@@ -1087,14 +1099,15 @@ metadata:
   name: bee
 spec:
   containers:
-  - image: nginx
-    name: bee
-    resources: {}
+    - image: nginx
+      name: bee
+      resources: { }
   dnsPolicy: ClusterFirst
   restartPolicy: Always
   nodeSelector:
-          size: Large
+    size: Large
 ```
+
 With node selector we cant provide advanced expr like OR/NOT etc.But this can be done with Node Affinity.
 
 Node affinity is an advanced concept of Node Selector .Example is shown below:
@@ -1109,15 +1122,15 @@ metadata:
   name: bee
 spec:
   containers:
-  - image: nginx
-    name: bee
+    - image: nginx
+      name: bee
   affinity:
     nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                  - key: size
-                    operator: NotIn
-                    values: 
-                       - Small
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: size
+                operator: NotIn
+                values:
+                  - Small
 ```
