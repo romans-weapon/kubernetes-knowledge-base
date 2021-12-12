@@ -1,0 +1,13 @@
+apiVersion: v1 # v1 for pod/service ,apps/v1 for replica-sets and deployments
+kind: Pod
+metadata:
+  name: dummy-pod
+  label:
+    app: sample-app
+spec:
+  containers:
+    - name: dummy-pod
+      image: alpine
+      command: ["sleep"] #similar to entrypoint in docker
+      args: ["100"] #similar to CMD in docker
+    restartPolicy: OnFailure

@@ -1,0 +1,61 @@
+version: '2.4'
+services:
+  kosh:
+    image: postgres
+    ports:
+    - "5433:5432"
+    restart: on-failure
+    container_name: "kosh_test"
+    environment:
+    - POSTGRES_PASSWORD=mysecretpassword
+    - POSTGRES_USER=test
+    - POSTGRES_DB=nabu
+    volumes:
+    - db_data:/var/lib/postgres/data 
+  redis:
+    image: redis
+    ports:
+    - "6379:6379"
+    restart: on-failure
+    container_name: "modak_redis"
+    command: redis-server --requirepass redis_password
+  mockServer:
+    image: mockserver/mockserver:mockserver-5.11.1
+    container_name: "mock_test_server"
+    ports:
+    - "1080:1080"
+    volumes:
+    - type: bind
+      source: .
+      target: /config
+    environment:
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/expectations.json
+  sdc:
+    image: streamsets/datacollector
+    container_name: "sdc_test"
+    ports:
+    - "18630:18630"
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    container_name: "modak-zookeeper"
+    ports:
+    - '2181:2181'
+    environment:
+    - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: 'bitnami/kafka:latest'
+    container_name: "modak-kafka"
+    ports:
+    - '9093:9093'
+    environment:
+    - KAFKA_BROKER_ID=1
+    - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+    - ALLOW_PLAINTEXT_LISTENER=yes
+    - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+    - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+    - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://10.50.0.207:9093
+    - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+    depends_on:
+    - zookeeper
+volumes:
+    db_data:
