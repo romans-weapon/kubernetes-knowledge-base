@@ -524,7 +524,7 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      tier: db-tie
+      tier: db-tier
 ```
 
 #### Some Deployment Commands
@@ -602,8 +602,132 @@ postgres-replica-set-jzgnh   1/1     Running   0          4s
 ```commandline
 controlplane ~ ➜  kubectl delete deployment postgres-deployment 
 deployment.apps "postgres-deployment" delete
-
 ```
+
+#### Updates and rollbacks to a deployment
+
+There are 4 types of deployment  strategies in case of updates in kubernetes 
+1. Recreate/All at once 
+2. Rolling update(default strategy in kubernetes)
+3. Blue-Green
+4. Canary
+
+1. To check the rollout(process of deploying a container) status use
+```commandline
+kuectl rollout status deployment <deployment_name>
+
+root@controlplane:~# kubectl scale deployment nginx-deployment --replicas=4
+deployment.apps/nginx-deployment scaled
+
+root@controlplane:~# kubectl rollout status deployment nginx-deployment 
+Waiting for deployment "nginx-deployment" rollout to finish: 3 of 4 updated replicas are available...
+deployment "nginx-deployment" successfully rolled out
+```
+2. Upgrade an image version in the deployment def file and check the series of events happened
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  labels:
+    tier: db-tier
+spec:
+  template:
+    metadata:
+      name: postgres
+      labels:
+        tier: db-tier
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:14.1 #updated from postgres:latest to postgres:14.1
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: mysecretpassword
+  replicas: 2
+  selector: 
+    matchLabels:
+      tier: db-tier
+```
+
+```commandline
+root@controlplane:~# kubectl describe deployment postgres-deployment 
+Name:                   postgres-deployment
+Namespace:              default
+CreationTimestamp:      Mon, 13 Dec 2021 09:07:44 +0000
+Labels:                 tier=db-tier
+Annotations:            deployment.kubernetes.io/revision: 2
+Selector:               tier=db-tier
+Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  tier=db-tier
+  Containers:
+   postgres:
+    Image:      postgres:14.1
+    Port:       5432/TCP
+    Host Port:  0/TCP
+    Environment:
+      POSTGRES_PASSWORD:  mysecretpassword
+    Mounts:               <none>
+  Volumes:                <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   postgres-deployment-db6f6447d (2/2 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  3m53s  deployment-controller  Scaled up replica set postgres-deployment-7f986b9ccb to 2
+  Normal  ScalingReplicaSet  75s    deployment-controller  Scaled up replica set postgres-deployment-db6f6447d to 1
+  Normal  ScalingReplicaSet  70s    deployment-controller  Scaled down replica set postgres-deployment-7f986b9ccb to 1
+  Normal  ScalingReplicaSet  70s    deployment-controller  Scaled up replica set postgres-deployment-db6f6447d to 2
+  Normal  ScalingReplicaSet  62s    deployment-controller  Scaled down replica set postgres-deployment-7f986b9ccb to 0
+
+# Here Kubernetes creates a new replicset within a deployment and does a rolling update by starting a new pod killing the older one one after the other.
+root@controlplane:~# kubectl get replicasets
+NAME                             DESIRED   CURRENT   READY   AGE
+postgres-deployment-7f986b9ccb   0         0         0       4m5s
+postgres-deployment-db6f6447d    2         2         2       87s
+```
+3. Whenever any upgrade is made kubernetes creates a revision and that can be seen using the command
+
+```commandline
+kubectl rollout history deployment <deployment_name>
+
+root@controlplane:~# kubectl rollout history deployment postgres-deployment 
+deployment.apps/postgres-deployment 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+
+The change cause can be updated using the --record option at the end of deployment creation
+Example:
+========
+kubectl set image deployment nginx nginx=nginx:1.17 --record
+```
+4. Undo an upgrade to the previous revision
+
+```commandline
+kubectl rollout undo deployment <deployment_name>
+root@controlplane:~# kubectl rollout undo deployment postgres-deployment 
+deployment.apps/postgres-deployment reverted
+ 
+root@controlplane:~# kubectl get replicasets
+NAME                             DESIRED   CURRENT   READY   AGE
+postgres-deployment-7f986b9ccb   0         0         0       4m5s
+postgres-deployment-db6f6447d    2         2         2       87s
+```
+
+![img.png](../images/kubernetes-dep-strategies.png)
 
 ### Namespaces in kubernetes
 
@@ -1108,7 +1232,7 @@ spec:
     size: Large
 ```
 
-With node selector we cant provide advanced expr like OR/NOT etc.But this can be done with Node Affinity.
+With node selector we can't provide advanced expr like OR/NOT etc.But this can be done with Node Affinity.
 
 Node affinity is an advanced concept of Node Selector .Example is shown below:
 
@@ -1133,4 +1257,72 @@ spec:
                 operator: NotIn
                 values:
                   - Small
+```
+
+### Kubernetes Services
+
+Services in Kubernetes provide communication between and outside of the appl's.It helps front-end app available to all the external users and communication between backend and front end pods and also communication with an external datasource.
+A service is a Kubernetes object like pod/replica-set etc which listens to a port on the node and forward that that request to the port on the pod .
+
+#### Types of services
+There are three types of services:
+1. NodePort
+2. ClusterIP
+3. LoadBalancer
+
+##### Node Port Service
+Example of a node-port service def file.
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort
+  ports:
+    - targetPort: 80 #optional
+      port: 80 #Mandatory
+      nodePort: 30008 #optional (Range between 30000-32767.If not specified it will take a free port)
+ selector:
+      app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
+```
+
+1. Create a service 
+```commandline
+controlplane ~ ➜  kubectl create -f service-def-pod.yml 
+service/postgres-service created
+```
+
+2. Get all services on the node
+```commandline
+controlplane ~ ➜  kubectl get svc
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kubernetes         ClusterIP   10.43.0.1       <none>        443/TCP          58m
+postgres-service   NodePort    10.43.202.235   <none>        5432:30008/TCP   8s
+```
+
+NOTE: In any case i.e.., single pod on single node, multiple-pods on single node or multiple pods on multiple-nodes,the service is created the same way without the need to change anything.
+
+#### Cluster IP Service
+ClusterIP is the default service type .
+Using ClusterIP service the pods and other services are reachable to one another in the cluster.
+Ex:
+If we create a service names myservice with service type as ClusterIP then a static DNS for the service will be created in the format
+<service_name>.<namespace>.<svc>.<domain_name> # myservice.default.svc.cluster.local
+and this DNS will be only resolved by pods/services within the cluster.
+
+##### Node Port Service
+Example of a node-port service def file.
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: ClusterIP
+  ports:
+    - targetPort: 80 #optional(port of the pod)
+      port: 80 #Mandatory(port of the service)
+ selector:
+      app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
 ```

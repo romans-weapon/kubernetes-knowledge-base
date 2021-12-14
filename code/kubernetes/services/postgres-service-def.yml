@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  type: NodePort
+  ports:
+    - targetPort: 5432 #optional
+      port: 5432 #Mandatory
+      nodePort: 30008 #optional (Range between 30000-32767.If not specified it will take a free port)
+ selector:
+         tier: db-tier
