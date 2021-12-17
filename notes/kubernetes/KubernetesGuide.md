@@ -10,33 +10,54 @@ The blow document consists of Kubernetes notes/cheat sheet and all the important
 
 # Table of contents
 
+- [Container Orchestration](#container-orchestration)
 - [Kubernetes](#kubernetes)
     - [Definition](#definition)
     - [Architecture](#architecture)
     - [Components of kubernetes Control plane](#components-of-kubernetes-control-plane)
     - [Internal working](#internal-working)
     - [PODs](#pods)
+      - [Example](#example)
+      - [Some Pod commands](#some-pod-commands)
+      - [MultiContainer Pods](#multicontainer-pods)
         - [Example](#example)
-        - [Some Pod commands](#some-pod-commands)
-        - [MultiContainer Pods](#multicontainer-pods)
     - [Replica Sets](#replica-sets)
-        - [Example](#example)
-        - [Some ReplicaSet Commands](#some-replicaset-commands)
+      - [Example](#example)
+      - [Some ReplicaSet Commands](#some-replicaset-commands)
     - [Deployments](#deployments)
-        - [Example](#example)
-        - [Some Deployment Commands](#some-deployment-commands)
+      - [Example](#example)
+      - [Some Deployment Commands](#some-deployment-commands)
+      - [Updates and rollbacks to a deployment](#updates-and-rollbacks-to-a-deployment)
     - [Namespaces in kubernetes](#namespaces-in-kubernetes)
-        - [Example](#example)
-        - [Some Namespace Commands](#some-namespace-commands)
+      - [Example](#example)
+      - [Some Namespace Commands](#some-namespace-commands)
     - [Environment Variables](#environment-variables)
-        - [Plain key-value](#plain-key-value)
-        - [Config Maps](#config-maps)
-        - [Secrets](#secrets)
+      - [Plain key-value](#plain-key-value)
+      - [Config Maps](#config-maps)
+        - [Config map commands](#config-map-commands)
+      - [Secrets](#secrets)
+        - [Secrets-commands](#secrets-commands)
     - [Security Context in Kubernetes](#security-context-in-kubernetes)
     - [Resource Requirements](#resource-requirements)
     - [Taints and Toleration](#taints-and-toleration)
-        - [Taint commands example](#taint-commands-example)
+      - [Taint commands example](#taint-commands-example)
     - [Node Selectors and Node Affinity](#node-selectors-and-node-affinity)
+    - [Kubernetes Services](#kubernetes-services)
+      - [Types of services](#types-of-services)
+        - [Node Port Service](#node-port-service)
+        - [Cluster IP Service](#cluster-ip-service)
+        - [Node Port Service](#node-port-service)
+    - [Observability](#observability)
+      - [Readiness Probes](#readiness-probes)
+      - [Liveness Probes](#liveness-probes)
+    - [Logging in Kubernetes](#logging-in-kubernetes)
+    - [Monitoring](#monitoring)
+    - [Volumes](#volumes)
+      - [Persistence Volumes](#persistence-volumes)
+      - [Persistence Volume Claim](#persistence-volume-claim)
+        - [Using PVC's in Pods/Deployments/Replicasets](#using-pvcs-in-podsdeploymentsreplicasets)
+    - [Storage Classes](#storage-classes)
+    - [Stateful Sets](#stateful-sets) 
 
 # Kubernetes
 
@@ -1303,7 +1324,7 @@ postgres-service   NodePort    10.43.202.235   <none>        5432:30008/TCP   8s
 
 NOTE: In any case i.e.., single pod on single node, multiple-pods on single node or multiple pods on multiple-nodes,the service is created the same way without the need to change anything.
 
-#### Cluster IP Service
+##### Cluster IP Service
 ClusterIP is the default service type .
 Using ClusterIP service the pods and other services are reachable to one another in the cluster.
 Ex:
@@ -1326,3 +1347,292 @@ spec:
  selector:
       app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
 ```
+
+### Observability
+
+Lifecycle of a pod
+Pending -> ContainerCreating -> Running
+
+#### Readiness Probes
+
+Probe means test .Tests you run to make sure whether the pod is ready or not
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  namespace: dev
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
+  readinessProbe:
+    httpGet:
+      path: /api/ready
+      port: 80
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 8
+```
+#### Liveness Probes
+
+A liveness probe is configured on the container to test whether the app within the container is healthy.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  namespace: dev
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
+  readinessProbe:
+    httpGet:
+      path: /api/ready
+      port: 80
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 8
+```
+
+### Logging in Kubernetes
+
+The logging in kubernetes is similar to that of docker.Below are the commands to see the logs of the pod
+
+```commandline
+kubectl logs -f <pod_name>
+
+kubectl logs -f <pod_name> <conatiner_name> #for multi conatiner pods
+```
+
+### Monitoring
+Kubernetes internally doesnt have a monitoring solution .We must do it by integrating it with other monitoring tools like promethus,datadog,dynatrace etc.
+An in memory monitoring app is knowm as metrics server.Below are the few commands for the same.
+
+```commandline
+root@controlplane:~# git clone https://github.com/kodekloudhub/kubernetes-metrics-server.git
+Cloning into 'kubernetes-metrics-server'...
+remote: Enumerating objects: 24, done.
+remote: Counting objects: 100% (12/12), done.
+remote: Compressing objects: 100% (12/12), done.
+remote: Total 24 (delta 4), reused 0 (delta 0), pack-reused 12
+Unpacking objects: 100% (24/24), done.
+
+root@controlplane:~# ls
+kubernetes-metrics-server  sample.yaml
+
+root@controlplane:~# ls
+kubernetes-metrics-server  sample.yaml
+root@controlplane:~# kubectl create -f kubernetes-metrics-server/
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+clusterrolebinding.rbac.authorization.k8s.io/metrics-server:system:auth-delegator created
+rolebinding.rbac.authorization.k8s.io/metrics-server-auth-reader created
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+serviceaccount/metrics-server created
+deployment.apps/metrics-server created
+service/metrics-server created
+clusterrole.rbac.authorization.k8s.io/system:metrics-server created
+clusterrolebinding.rbac.authorization.k8s.io/system:metrics-server created
+
+root@controlplane:~# kubectl top pod
+NAME       CPU(cores)   MEMORY(bytes)   
+elephant   21m          32Mi            
+lion       1m           18Mi            
+rabbit     122m         92Mi            
+
+root@controlplane:~# kubectl top node
+NAME           CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+controlplane   374m         1%     1207Mi          0%        
+node01         60m          0%     338Mi           0%        
+root@controlplane:~# 
+```
+
+### Volumes
+
+Every pod/docker container is transient in nature meaning they live for a very short period of time and then get deleted.
+If the container gets deleted the underlying data generated by the container will also get deleted.To solve this we use the concept of 
+volumes to persist the data so that even if  the container/pod goes down the data doesnt get deleted.
+
+Example of a pod with volume-mount:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+ name: postgres
+ labels:
+   tier: db-tier
+spec:
+ containers:
+   - name: postgres
+     image: postgres
+     ports:
+     - containerPort: 5432
+     env:
+        - name: POSTGRES_PASSWORD
+          value: mysecretpassword
+     volumeMounts:
+       - name: postgres-vol
+         mountPath: /var/lib/postgresql
+ volumes:
+    - name: postgres-vol
+      hostPath:
+        path: /home/postgres/vol
+        type: DirectoryOrCreate
+```
+
+But this is not recommended in a multi-node cluster.For that you need to use Storage solutions like GCS,AWS-EBS,AZURE FILEetc.
+Ex :
+
+```yaml
+volumes:
+  - name: aws-vol
+    awsElasticBlockStore:
+      volumeID: <vol_id>
+      fsType: ext4
+```
+
+#### Persistence Volumes
+
+If there are huge no of applications to be deployed using pods ,it will become difficult for them to provide volume mounts within the pod-def file.
+This is resolved by Persistent Volumes or PV's.
+A PV is a cluster wide pool of storage vols configured by admin to be used by users deploying apps on the cluster,The users can now select storage from
+this pool using  Persistence Volume Claims.
+
+Ex of PVC def file:
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: pv-vol
+spec:
+ accessModes:
+   - ReadWriteOnce
+ capacity:
+     storage: 1Gi
+ hostPath:
+     path: /data
+```
+#### Persistence Volume Claim
+
+PVC's are created by users and PV's are created by admins.Once the PVC is created kubernetes binds the PVC with the PV.
+Every PVC is bound to single PV after checking the PV having sufficient capacity as requested by the claim.If there are multiple 
+matches for a single claim then we can spcify labels and filter for a specific PV.
+
+Example of PVC:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: pvc-claim
+spec:
+ accessModes:
+   - ReadWriteOnce
+ resources:
+    requests:
+        storage: 500Mi
+```
+Once the above PVC is created since it matches with the above PV it gets bound to that PV. If a PVC is deleted,the PV is 
+retained by default,but can be changed to either delete/recycle
+
+##### Using PVC's in Pods/Deployments/Replicasets
+
+For Pod:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+    - name: myfrontend
+      image: nginx
+      volumeMounts:
+      - mountPath: "/var/www/html"
+        name: mypd
+  volumes:
+    - name: mypd
+      persistentVolumeClaim:
+        claimName: myclaim
+```
+For Deployment/Rs: 
+It is the same as pod for both deployment/R-S.
+
+### Storage Classes
+
+Storage Classes in Kubernetes are used for Dynamic PV provisioning.Instaed of creating a PV file for an already existing volume,
+we can create storage class using a provisioner and it will create a volume at runtime.
+
+Ex: Storage Class
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: PersistentVolumeClaim
+metadata:
+ name: google-storage
+provisioner: kubernetes.io/gce-pd # different for different types of volumes
+parameters:
+    type: pd
+    replication-type: none
+```
+
+Ex Pod:
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: pvc-claim
+spec:
+ accessModes:
+   - ReadWriteOnce
+ storageClassName: google-storage
+ resources:
+    requests:
+        storage: 500Mi
+```
+
+### Stateful Sets
+
+Using Stateful sets pods are created in sequential order .After one pod is up and running the other pod is created.We need
+a stateful set only if the instances need a stable name (or) the instances need to come up in ana order.Monty used for database instances.
+Stateful set def file is same as deployment def file.
+
+Example: 
+```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    tier: db-tier
+spec:
+  template:
+    metadata:
+      name: postgres
+      labels:
+        tier: db-tier
+    spec:
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: mysecretpassword
+  replicas: 2
+  selector:
+    matchLabels:
+      tier: db-tier
+  serviceName:postgres-h #need to add headless service
+```
+
+Once a statefulset is created all the pods are created one after the other --odered graceful deployment
+Each pod gets a unique stable DNS name.
