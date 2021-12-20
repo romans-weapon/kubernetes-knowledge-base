@@ -11,6 +11,8 @@ spec:
      ports:
      - containerPort: 5432
      env:
+        - name: POSTGRES_USER
+          value: postgres_user
         - name: POSTGRES_PASSWORD
           value: mysecretpassword
      volumeMounts:

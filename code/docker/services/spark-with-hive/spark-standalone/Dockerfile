@@ -38,7 +38,7 @@ ADD configs/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
 
 
 
-##################################################### spark-standalone without Hadoop #####################################################################
+##################################################### spark-with-hive-standalone without Hadoop #####################################################################
 
 RUN aria2c -j 5 https://archive.apache.org/dist/spark/spark-${spark_version}/spark-${spark_version}-bin-without-hadoop.tgz -o spark.tgz && \
     tar -xzf spark.tgz && \ 
@@ -57,7 +57,7 @@ RUN mv /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-env.sh.temp
 RUN mv /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.conf.template /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.conf && \
  echo "spark.eventLog.dir file:/usr/bin/spark-${spark_version}-bin-without-hadoop/logs" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.conf && \
  echo "spark.history.fs.logDirectory file:/usr/bin/spark-${spark_version}-bin-without-hadoop/logs" >> /usr/bin/spark-${spark_version}-bin-without-hadoop/conf/spark-defaults.conf
-########################################################spark-standalone installation end###########################################################################################
+########################################################spark-with-hive-standalone installation end###########################################################################################
 
 
 

@@ -9,8 +9,8 @@ services:
       - POSTGRES_PASSWORD=hive
   spark:
     image: "spark-standalone-hadoop:latest"
-    hostname: "hadoop.spark"
-    container_name: "spark"
+    hostname: "hadoop.spark-with-hive"
+    container_name: "spark-with-hive"
     restart: always
     ports:
       - "4041:4041"
