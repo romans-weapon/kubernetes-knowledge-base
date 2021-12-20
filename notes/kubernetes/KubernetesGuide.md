@@ -1,8 +1,5 @@
 # Container Orchestration
-
-Automatically deploying and managing containers is called Container Orchestration.It automates the deployment,
-management, scaling, and networking of containers. Examples of Container Orchestration Technologies are:
-
+Container Orchestration automates the process of deployment, management, scaling, and networking of containers. Examples of Container Orchestration Technologies are:
 1. Docker Swarm
 2. Kubernetes
 3. Mesos
@@ -11,6 +8,7 @@ The blow document consists of Kubernetes notes/cheat sheet and all the important
 # Table of contents
 
 - [Container Orchestration](#container-orchestration)
+- [Table of contents](#table-of-contents)
 - [Kubernetes](#kubernetes)
     - [Definition](#definition)
     - [Architecture](#architecture)
@@ -46,7 +44,9 @@ The blow document consists of Kubernetes notes/cheat sheet and all the important
       - [Types of services](#types-of-services)
         - [Node Port Service](#node-port-service)
         - [Cluster IP Service](#cluster-ip-service)
-        - [Node Port Service](#node-port-service)
+        - [LoadBalancer Service](#loadbalancer-service)
+    - [Networking in Kubernetes](#networking-in-kubernetes)
+      - [Network Policies](#network-policies)
     - [Observability](#observability)
       - [Readiness Probes](#readiness-probes)
       - [Liveness Probes](#liveness-probes)
@@ -57,7 +57,7 @@ The blow document consists of Kubernetes notes/cheat sheet and all the important
       - [Persistence Volume Claim](#persistence-volume-claim)
         - [Using PVC's in Pods/Deployments/Replicasets](#using-pvcs-in-podsdeploymentsreplicasets)
     - [Storage Classes](#storage-classes)
-    - [Stateful Sets](#stateful-sets) 
+    - [Stateful Sets](#stateful-sets)
 
 # Kubernetes
 
@@ -1282,12 +1282,12 @@ spec:
 
 ### Kubernetes Services
 
-Services in Kubernetes provide communication between and outside of the appl's.It helps front-end app available to all the external users and communication between backend and front end pods and also communication with an external datasource.
+Services in Kubernetes provide communication between and outside of the appl's/pods.It helps front-end app available to all the external users and communication between backend and front end pods and also communication with an external datasource.
 A service is a Kubernetes object like pod/replica-set etc which listens to a port on the node and forward that that request to the port on the pod .
 
 #### Types of services
 There are three types of services:
-1. NodePort
+1. NodePort  -Useful in case of 
 2. ClusterIP
 3. LoadBalancer
 
@@ -1332,21 +1332,69 @@ If we create a service names myservice with service type as ClusterIP then a sta
 <service_name>.<namespace>.<svc>.<domain_name> # myservice.default.svc.cluster.local
 and this DNS will be only resolved by pods/services within the cluster.
 
-##### Node Port Service
-Example of a node-port service def file.
+##### LoadBalancer Service
+Example of a LoadBalancer service def file. A load balancer service creates an EXTERNALIP instaed of internal ip which is created in case of ClusterIp service
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: my-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - targetPort: 80 #optional(port of the pod)
       port: 80 #Mandatory(port of the service)
  selector:
       app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
 ```
+
+### Networking in Kubernetes
+Networking allows us to define and declare rules on kubernetes objects like pods/deployments etc to allow only authorized/restricted traffic.
+
+#### Network Policies
+There are two types of traffic flowing between different services in a na application. 1. Ingress/Inbound 2. Egress/Outbound
+![img.png](../images/ingressegress.png)
+Networking policies are rules which specify which ports to open for allowing traffic and send traffic.All pods in a netork can 
+communicate with each other with their ip addresses even though they are on different nodes of the cluster.Kubernetes is configured
+by all-allow rule which allows traffic from any pod to any other pod in the cluster.These are enforced by the networks implemented in the kubernetes cluster
+like calico/kube-router/etc. Flannel doesnt support NetworkPolicy.
+You can specify rules with the help of network policy and attach them to your pod.
+Example:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+Kind: NetworkPolicy
+metadata:
+    name: db-poicy
+spec:
+  podSelector:
+      matchLabels:
+          role: db
+  policyType:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+             matchLabels:
+                 role: api-pod
+        - namespaceSelector:
+             matchLabels:
+                 name: prod         
+      ports:
+        - protocol: TCP
+          port: 3306
+  egress:
+     - to:
+          - podSelector:
+             matchLabels:
+                 role: db-pod
+       ports:
+          - protocol: TCP
+            port: 2181
+- 
+```
+
 
 ### Observability
 
@@ -1355,7 +1403,7 @@ Pending -> ContainerCreating -> Running
 
 #### Readiness Probes
 
-Probe means test .Tests you run to make sure whether the pod is ready or not
+Probe means test .Tests you run to make sure whether the pod is ready or not.Readiness probes runs on the container during its whole lifecycle.
 
 ```yaml
 apiVersion: v1
@@ -1379,7 +1427,7 @@ spec:
 ```
 #### Liveness Probes
 
-A liveness probe is configured on the container to test whether the app within the container is healthy.
+A liveness probe is configured on the container to know when to restart a container.
 
 ```yaml
 apiVersion: v1
@@ -1636,3 +1684,4 @@ spec:
 
 Once a statefulset is created all the pods are created one after the other --odered graceful deployment
 Each pod gets a unique stable DNS name.
+
