@@ -3,6 +3,7 @@ Container Orchestration automates the process of deployment, management, scaling
 1. Docker Swarm
 2. Kubernetes
 3. Mesos
+
 The blow document consists of Kubernetes notes/cheat sheet and all the important concepts related to CKAD Certification
 
 # Table of contents
@@ -1209,11 +1210,15 @@ spec:
 ```commandline
 root@controlplane:~# kubectl describe node controlplane | grep -i Taint
 Taints:             node-role.kubernetes.io/master:NoSchedule
+
+root@controlplane:~# kubectl describe pod alpha |grep -i Tolerations
+Tolerations:     app_type=alpha:NoSchedule
+root@controlplane:~# 
 ```
 
 ### Node Selectors and Node Affinity
 
-Some times you want your app to run on the nodes having higher configurations so that the jo doesn't fail.In such cases
+Some times you want your app to run on the nodes having higher configurations so that the joB doesn't fail.In such cases
 you need to label the nodes and then use node selectors in your pod definition files to schedule the pod on that
 particular node
 
@@ -1354,13 +1359,14 @@ Networking allows us to define and declare rules on kubernetes objects like pods
 #### Network Policies
 There are two types of traffic flowing between different services in a na application. 1. Ingress/Inbound 2. Egress/Outbound
 ![img.png](../images/ingressegress.png)
+
 Networking policies are rules which specify which ports to open for allowing traffic and send traffic.All pods in a netork can 
 communicate with each other with their ip addresses even though they are on different nodes of the cluster.Kubernetes is configured
 by all-allow rule which allows traffic from any pod to any other pod in the cluster.These are enforced by the networks implemented in the kubernetes cluster
 like calico/kube-router/etc. Flannel doesnt support NetworkPolicy.
-You can specify rules with the help of network policy and attach them to your pod.
-Example:
+You can specify rules with the help of network policy and attach them to your pod.\
 
+Example:
 ```yaml
 apiVersion: networking.k8s.io/v1
 Kind: NetworkPolicy
@@ -1393,6 +1399,25 @@ spec:
           - protocol: TCP
             port: 2181
 - 
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+        name: ing-network
+spec:
+        rules:
+                - host: "ckad-mock-exam-solution.com"
+                  http: 
+                     paths:
+                            - pathType: Prefix
+                              path: "/vedio"
+                              backend:
+                                      service:
+                                         name: my-video-service
+                                         port:
+                                           number: 30093
 ```
 
 
