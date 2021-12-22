@@ -109,7 +109,7 @@ down.
 ### PODs
 
 Kubernetes doesn't directly deploy containers on the nodes.The containers are en-capsulated into a kubernetes object
-called as pod.I
+called as pod.
 
 1. A pod is a single instance of an application.It encapsulates your container application for deploying into kubernetes
    cluster.
@@ -118,7 +118,7 @@ called as pod.I
 3. We can have multiple containers within a single pod but they have to be containers of a different kind or any helper
    container.All the containers within a pod share the same network(can communicate as localhost) and same storage
    space.
-4. An Ip address is assigned to a pod (range --10.244.0.0).Every POD has a separate IP assigned.Pods communicate though
+4. An IP address is assigned to a pod (range --10.244.0.0).Every POD has a separate IP assigned.Pods communicate though
    this internal IP
 5. kubernetes uses yaml files as inputs for creation of objects like pods/deployments/replica-sets etc.Below is an
    example of nginx-definition.yml file. Example pod:
@@ -138,6 +138,10 @@ spec:
       ports:
         - containerPort: 80
 ```
+
+6. All the components on the master like the kube-api/etcd etc. are deployed as pods in the kube-system namespace and these
+   are automatically started by kubernetes.These are known as static pods.It is started by the master's kubelet from a file 
+   located at /etc/kubernetes/manifests.
 
 NOTE: All the kubectl commands which are used for pod and the corresponding outputs can be seen in code/kubernetes
 section
@@ -355,7 +359,11 @@ kubectl create deployment --image=nginx nginx --dry-run -o yaml
 #### MultiContainer Pods
 
 We can have more than one container in a single pod and this is known as multi-container pods.The containers within this
-pod share the same network and storage.\
+pod share the same network space (localhost) and storage.\
+There are different design patterns of Multi-container pods:\
+1. Ambassador
+2. Adapter - process the logs/data of the main container
+3. SideCar - logging agent for a web server
 Example of a multi container pod is present in code section
 
 ##### Example
@@ -1466,7 +1474,7 @@ spec:
       image: nginx:1.14.2
       ports:
         - containerPort: 80
-  readinessProbe:
+  livenessProbe:
     httpGet:
       path: /api/ready
       port: 80
