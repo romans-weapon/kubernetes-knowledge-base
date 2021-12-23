@@ -10,4 +10,4 @@ spec:
       image: alpine
       command: ["sleep"] #similar to entrypoint in docker
       args: ["100"] #similar to CMD in docker
-    restartPolicy: OnFailure
+    restartPolicy: OnFailure #Default is `always`

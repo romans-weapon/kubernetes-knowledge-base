@@ -1,25 +1,71 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+data:
+  POSTGRES_USER: bXktYXBw
+  POSTGRES_PASSWORD: Mzk1MjgkdmRnN0pi
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-deployment
+  name: postgres-db-deployment
   labels:
-    tier: db-tier
+    tier: db
 spec:
   template:
     metadata:
-      name: postgres
+      name: postgres-db-pod
       labels:
-        tier: db-tier
+        app: database
     spec:
       containers:
         - name: postgres
-          image: postgres
+          image: postgres:latest
           ports:
             - containerPort: 5432
-          env:
-            - name: POSTGRES_PASSWORD
-              value: mysecretpassword
+          envFrom:
+            - secrectRef:
+                  name: postgres-secret
+          volumeMounts:
+             - name: postgres-vol
+               mountPath: /var/lib/postgresql
+          livenessProbe:
+            exec:
+              command:
+                 - /bin/sh
+                 - -c
+                 - exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 8
+          tolerations:
+            - key: "dbs"
+              value: "postgres"
+              operator: "Equal"
+              effect: "NoSchedule"
+      volumes:
+        - name: postgres-vol
+          hostPath:
+            path: /home/postgres/vol
+            type: DirectoryOrCreate
   replicas: 2
   selector:
     matchLabels:
-      tier: db-tie
+      app: database
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: database
+  type: NodePort
+  ports:
+    - targetPort: 5432
+      port: 5432

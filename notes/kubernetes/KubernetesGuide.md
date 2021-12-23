@@ -119,7 +119,7 @@ called as pod.
    container.All the containers within a pod share the same network(can communicate as localhost) and same storage
    space.
 4. An IP address is assigned to a pod (range --10.244.0.0).Every POD has a separate IP assigned.Pods communicate though
-   this internal IP
+   this internal IP.Every pod across the cluster can communicate with every other pod using internal Ip address
 5. kubernetes uses yaml files as inputs for creation of objects like pods/deployments/replica-sets etc.Below is an
    example of nginx-definition.yml file. Example pod:
 
@@ -578,6 +578,8 @@ metadata:
   labels:
     tier: db-tier
 spec:
+  strategy:
+    type: ReCreate
   template:
     metadata:
       name: postgres
@@ -604,7 +606,7 @@ controlplane ~ ➜  kubectl get deployments
 NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
 postgres-deployment   2/2     2            2           32s
 
-controlplane ~ ✖ kubectl get replicaset
+controlplane ~ ➜ kubectl get replicaset
 NAME                             DESIRED   CURRENT   READY   AGE
 postgres-deployment-7f986b9ccb   2         2         2       22s 
 
@@ -644,7 +646,7 @@ There are 4 types of deployment  strategies in case of updates in kubernetes
 
 1. To check the rollout(process of deploying a container) status use
 ```commandline
-kuectl rollout status deployment <deployment_name>
+kubectl rollout status deployment <deployment_name>
 
 root@controlplane:~# kubectl scale deployment nginx-deployment --replicas=4
 deployment.apps/nginx-deployment scaled
@@ -1154,11 +1156,10 @@ Taints and Toleration are used to set restrictions/limitations on what pods can 
 
 1. By default, pods cannot tolerate a taint on a node unless we add a toleration to a pod,so that it can be scheduled on
    that particular node. NOTE: Taints are set on nodes and tolerations are set on pods.
-
 2. Taints and tolerations only tell the nodes to accept certain type of pods but not the other way around i.e.., a pod
    with toleration can go into a node without any taint but a node with a taint can't accept a pod without a toleration.
 3. When a kubernetes cluster is first setup a taint is set on the master automatically that prevents any pod from
-   getting scheduled on the master.
+   getting scheduled on the master.To schedule pods on the master we need to add toleration to the pod .
 
 #### Taint commands example
 
@@ -1213,7 +1214,7 @@ spec:
       effect: "NoSchedule"
 ```
 
-5. check if any taint exists on the node
+5. check if any taint exists on the node and any toleration exist on the pod.
 
 ```commandline
 root@controlplane:~# kubectl describe node controlplane | grep -i Taint
@@ -1226,7 +1227,7 @@ root@controlplane:~#
 
 ### Node Selectors and Node Affinity
 
-Some times you want your app to run on the nodes having higher configurations so that the joB doesn't fail.In such cases
+Some times you want your app to run on the nodes having higher configurations so that the job doesn't fail.In such cases
 you need to label the nodes and then use node selectors in your pod definition files to schedule the pod on that
 particular node
 
@@ -1682,7 +1683,7 @@ spec:
 ### Stateful Sets
 
 Using Stateful sets pods are created in sequential order .After one pod is up and running the other pod is created.We need
-a stateful set only if the instances need a stable name (or) the instances need to come up in ana order.Monty used for database instances.
+a stateful set only if the instances need a stable name (or) the instances need to come up in ana order.Mostly used for database instances.
 Stateful set def file is same as deployment def file.
 
 Example: 
