@@ -1,5 +1,8 @@
 # Container Orchestration
-Container Orchestration automates the process of deployment, management, scaling, and networking of containers. Examples of Container Orchestration Technologies are:
+
+Container Orchestration automates the process of deployment, management, scaling, and networking of containers. Examples
+of Container Orchestration Technologies are:
+
 1. Docker Swarm
 2. Kubernetes
 3. Mesos
@@ -16,47 +19,47 @@ The blow document consists of Kubernetes notes/cheat sheet and all the important
     - [Components of kubernetes Control plane](#components-of-kubernetes-control-plane)
     - [Internal working](#internal-working)
     - [PODs](#pods)
-      - [Example](#example)
-      - [Some Pod commands](#some-pod-commands)
-      - [MultiContainer Pods](#multicontainer-pods)
         - [Example](#example)
+        - [Some Pod commands](#some-pod-commands)
+        - [MultiContainer Pods](#multicontainer-pods)
+            - [Example](#example)
     - [Replica Sets](#replica-sets)
-      - [Example](#example)
-      - [Some ReplicaSet Commands](#some-replicaset-commands)
+        - [Example](#example)
+        - [Some ReplicaSet Commands](#some-replicaset-commands)
     - [Deployments](#deployments)
-      - [Example](#example)
-      - [Some Deployment Commands](#some-deployment-commands)
-      - [Updates and rollbacks to a deployment](#updates-and-rollbacks-to-a-deployment)
+        - [Example](#example)
+        - [Some Deployment Commands](#some-deployment-commands)
+        - [Updates and rollbacks to a deployment](#updates-and-rollbacks-to-a-deployment)
     - [Namespaces in kubernetes](#namespaces-in-kubernetes)
-      - [Example](#example)
-      - [Some Namespace Commands](#some-namespace-commands)
+        - [Example](#example)
+        - [Some Namespace Commands](#some-namespace-commands)
     - [Environment Variables](#environment-variables)
-      - [Plain key-value](#plain-key-value)
-      - [Config Maps](#config-maps)
-        - [Config map commands](#config-map-commands)
-      - [Secrets](#secrets)
-        - [Secrets-commands](#secrets-commands)
+        - [Plain key-value](#plain-key-value)
+        - [Config Maps](#config-maps)
+            - [Config map commands](#config-map-commands)
+        - [Secrets](#secrets)
+            - [Secrets-commands](#secrets-commands)
     - [Security Context in Kubernetes](#security-context-in-kubernetes)
     - [Resource Requirements](#resource-requirements)
     - [Taints and Toleration](#taints-and-toleration)
-      - [Taint commands example](#taint-commands-example)
+        - [Taint commands example](#taint-commands-example)
     - [Node Selectors and Node Affinity](#node-selectors-and-node-affinity)
     - [Kubernetes Services](#kubernetes-services)
-      - [Types of services](#types-of-services)
-        - [Node Port Service](#node-port-service)
-        - [Cluster IP Service](#cluster-ip-service)
-        - [LoadBalancer Service](#loadbalancer-service)
+        - [Types of services](#types-of-services)
+            - [Node Port Service](#node-port-service)
+            - [Cluster IP Service](#cluster-ip-service)
+            - [LoadBalancer Service](#loadbalancer-service)
     - [Networking in Kubernetes](#networking-in-kubernetes)
-      - [Network Policies](#network-policies)
+        - [Network Policies](#network-policies)
     - [Observability](#observability)
-      - [Readiness Probes](#readiness-probes)
-      - [Liveness Probes](#liveness-probes)
+        - [Readiness Probes](#readiness-probes)
+        - [Liveness Probes](#liveness-probes)
     - [Logging in Kubernetes](#logging-in-kubernetes)
     - [Monitoring](#monitoring)
     - [Volumes](#volumes)
-      - [Persistence Volumes](#persistence-volumes)
-      - [Persistence Volume Claim](#persistence-volume-claim)
-        - [Using PVC's in Pods/Deployments/Replicasets](#using-pvcs-in-podsdeploymentsreplicasets)
+        - [Persistence Volumes](#persistence-volumes)
+        - [Persistence Volume Claim](#persistence-volume-claim)
+            - [Using PVC's in Pods/Deployments/Replicasets](#using-pvcs-in-podsdeploymentsreplicasets)
     - [Storage Classes](#storage-classes)
     - [Stateful Sets](#stateful-sets)
 
@@ -139,9 +142,9 @@ spec:
         - containerPort: 80
 ```
 
-6. All the components on the master like the kube-api/etcd etc. are deployed as pods in the kube-system namespace and these
-   are automatically started by kubernetes.These are known as static pods.It is started by the master's kubelet from a file 
-   located at /etc/kubernetes/manifests.
+6. All the components on the master like the kube-api/etcd etc. are deployed as pods in the kube-system namespace and
+   these are automatically started by kubernetes.These are known as static pods.It is started by the master's kubelet
+   from a file located at /etc/kubernetes/manifests.
 
 NOTE: All the kubectl commands which are used for pod and the corresponding outputs can be seen in code/kubernetes
 section
@@ -361,10 +364,10 @@ kubectl create deployment --image=nginx nginx --dry-run -o yaml
 We can have more than one container in a single pod and this is known as multi-container pods.The containers within this
 pod share the same network space (localhost) and storage.\
 There are different design patterns of Multi-container pods:\
+
 1. Ambassador
 2. Adapter - process the logs/data of the main container
-3. SideCar - logging agent for a web server
-Example of a multi container pod is present in code section
+3. SideCar - logging agent for a web server Example of a multi container pod is present in code section
 
 ##### Example
 
@@ -638,13 +641,15 @@ deployment.apps "postgres-deployment" delete
 
 #### Updates and rollbacks to a deployment
 
-There are 4 types of deployment  strategies in case of updates in kubernetes 
-1. Recreate/All at once 
+There are 4 types of deployment strategies in case of updates in kubernetes
+
+1. Recreate/All at once
 2. Rolling update(default strategy in kubernetes)
 3. Blue-Green
 4. Canary
 
 1. To check the rollout(process of deploying a container) status use
+
 ```commandline
 kubectl rollout status deployment <deployment_name>
 
@@ -655,6 +660,7 @@ root@controlplane:~# kubectl rollout status deployment nginx-deployment
 Waiting for deployment "nginx-deployment" rollout to finish: 3 of 4 updated replicas are available...
 deployment "nginx-deployment" successfully rolled out
 ```
+
 2. Upgrade an image version in the deployment def file and check the series of events happened
 
 ```yaml
@@ -680,7 +686,7 @@ spec:
             - name: POSTGRES_PASSWORD
               value: mysecretpassword
   replicas: 2
-  selector: 
+  selector:
     matchLabels:
       tier: db-tier
 ```
@@ -730,6 +736,7 @@ NAME                             DESIRED   CURRENT   READY   AGE
 postgres-deployment-7f986b9ccb   0         0         0       4m5s
 postgres-deployment-db6f6447d    2         2         2       87s
 ```
+
 3. Whenever any upgrade is made kubernetes creates a revision and that can be seen using the command
 
 ```commandline
@@ -746,6 +753,7 @@ Example:
 ========
 kubectl set image deployment nginx nginx=nginx:1.17 --record
 ```
+
 4. Undo an upgrade to the previous revision
 
 ```commandline
@@ -1296,17 +1304,23 @@ spec:
 
 ### Kubernetes Services
 
-Services in Kubernetes provide communication between and outside of the appl's/pods.It helps front-end app available to all the external users and communication between backend and front end pods and also communication with an external datasource.
-A service is a Kubernetes object like pod/replica-set etc which listens to a port on the node and forward that that request to the port on the pod .
+Services in Kubernetes provide communication between and outside of the appl's/pods.It helps front-end app available to
+all the external users and communication between backend and front end pods and also communication with an external
+datasource. A service is a Kubernetes object like pod/replica-set etc which listens to a port on the node and forward
+that that request to the port on the pod .
 
 #### Types of services
+
 There are three types of services:
-1. NodePort  -Useful in case of 
-2. ClusterIP
-3. LoadBalancer
+
+1. NodePort -Useful in case of pods within a minikube ( single node)
+2. ClusterIP -default service type
+3. LoadBalancer - used for a single point of contact when running in a cluster.
 
 ##### Node Port Service
+
 Example of a node-port service def file.
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -1318,17 +1332,19 @@ spec:
     - targetPort: 80 #optional
       port: 80 #Mandatory
       nodePort: 30008 #optional (Range between 30000-32767.If not specified it will take a free port)
- selector:
-      app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
+  selector:
+    app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
 ```
 
-1. Create a service 
+1. Create a service
+
 ```commandline
 controlplane ~ ➜  kubectl create -f service-def-pod.yml 
 service/postgres-service created
 ```
 
 2. Get all services on the node
+
 ```commandline
 controlplane ~ ➜  kubectl get svc
 NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
@@ -1336,18 +1352,23 @@ kubernetes         ClusterIP   10.43.0.1       <none>        443/TCP          58
 postgres-service   NodePort    10.43.202.235   <none>        5432:30008/TCP   8s
 ```
 
-NOTE: In any case i.e.., single pod on single node, multiple-pods on single node or multiple pods on multiple-nodes,the service is created the same way without the need to change anything.
+NOTE: In any case i.e.., single pod on single node, multiple-pods on single node or multiple pods on multiple-nodes,the
+service is created the same way without the need to change anything.
 
 ##### Cluster IP Service
-ClusterIP is the default service type .
-Using ClusterIP service the pods and other services are reachable to one another in the cluster.
-Ex:
-If we create a service names myservice with service type as ClusterIP then a static DNS for the service will be created in the format
-<service_name>.<namespace>.<svc>.<domain_name> # myservice.default.svc.cluster.local
-and this DNS will be only resolved by pods/services within the cluster.
+
+ClusterIP is the default service type . Using ClusterIP service the pods and other services are reachable to one another
+in the cluster. Ex:
+If we create a service names myservice with service type as ClusterIP then a static DNS for the service will be created
+in the format
+<service_name>.<namespace>.<svc>.<domain_name> # myservice.default.svc.cluster.local and this DNS will be only resolved
+by pods/services within the cluster.
 
 ##### LoadBalancer Service
-Example of a LoadBalancer service def file. A load balancer service creates an EXTERNALIP instaed of internal ip which is created in case of ClusterIp service
+
+Example of a LoadBalancer service def file. A load balancer service creates an EXTERNALIP instaed of internal ip which
+is created in case of ClusterIp service
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -1358,86 +1379,90 @@ spec:
   ports:
     - targetPort: 80 #optional(port of the pod)
       port: 80 #Mandatory(port of the service)
- selector:
-      app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
+  selector:
+    app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
 ```
 
 ### Networking in Kubernetes
-Networking allows us to define and declare rules on kubernetes objects like pods/deployments etc to allow only authorized/restricted traffic.
+
+Networking allows us to define and declare rules on kubernetes objects like pods/deployments etc to allow only
+authorized/restricted traffic.
 
 #### Network Policies
-There are two types of traffic flowing between different services in a na application. 1. Ingress/Inbound 2. Egress/Outbound
+
+There are two types of traffic flowing between different services in a na application. 1. Ingress/Inbound 2.
+Egress/Outbound
 ![img.png](../images/ingressegress.png)
 
-Networking policies are rules which specify which ports to open for allowing traffic and send traffic.All pods in a netork can 
-communicate with each other with their ip addresses even though they are on different nodes of the cluster.Kubernetes is configured
-by all-allow rule which allows traffic from any pod to any other pod in the cluster.These are enforced by the networks implemented in the kubernetes cluster
-like calico/kube-router/etc. Flannel doesnt support NetworkPolicy.
-You can specify rules with the help of network policy and attach them to your pod.\
+Networking policies are rules which specify which ports to open for allowing traffic and send traffic.All pods in a
+netork can communicate with each other with their ip addresses even though they are on different nodes of the
+cluster.Kubernetes is configured by all-allow rule which allows traffic from any pod to any other pod in the
+cluster.These are enforced by the networks implemented in the kubernetes cluster like calico/kube-router/etc. Flannel
+doesnt support NetworkPolicy. You can specify rules with the help of network policy and attach them to your pod.\
 
 Example:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 Kind: NetworkPolicy
 metadata:
-    name: db-poicy
+  name: db-poicy
 spec:
   podSelector:
-      matchLabels:
-          role: db
+    matchLabels:
+      role: db
   policyType:
     - Ingress
     - Egress
   ingress:
     - from:
         - podSelector:
-             matchLabels:
-                 role: api-pod
+            matchLabels:
+              role: api-pod
         - namespaceSelector:
-             matchLabels:
-                 name: prod         
+            matchLabels:
+              name: prod
       ports:
         - protocol: TCP
           port: 3306
   egress:
-     - to:
-          - podSelector:
-             matchLabels:
-                 role: db-pod
-       ports:
-          - protocol: TCP
-            port: 2181
-- 
+    - to:
+        - podSelector:
+            matchLabels:
+              role: db-pod
+      ports:
+        - protocol: TCP
+          port: 2181
+  - 
 ```
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-        name: ing-network
+  name: ing-network
 spec:
-        rules:
-                - host: "ckad-mock-exam-solution.com"
-                  http: 
-                     paths:
-                            - pathType: Prefix
-                              path: "/vedio"
-                              backend:
-                                      service:
-                                         name: my-video-service
-                                         port:
-                                           number: 30093
+  rules:
+    - host: "ckad-mock-exam-solution.com"
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/vedio"
+            backend:
+              service:
+                name: my-video-service
+                port:
+                  number: 30093
 ```
-
 
 ### Observability
 
-Lifecycle of a pod
-Pending -> ContainerCreating -> Running
+Lifecycle of a pod Pending -> ContainerCreating -> Running
 
 #### Readiness Probes
 
-Probe means test .Tests you run to make sure whether the pod is ready or not.Readiness probes runs on the container during its whole lifecycle.
+Probe means test .Tests you run to make sure whether the pod is ready or not.Readiness probes runs on the container
+during its whole lifecycle.
 
 ```yaml
 apiVersion: v1
@@ -1459,6 +1484,7 @@ spec:
     periodSeconds: 5
     failureThreshold: 8
 ```
+
 #### Liveness Probes
 
 A liveness probe is configured on the container to know when to restart a container.
@@ -1495,8 +1521,10 @@ kubectl logs -f <pod_name> <conatiner_name> #for multi conatiner pods
 ```
 
 ### Monitoring
-Kubernetes internally doesnt have a monitoring solution .We must do it by integrating it with other monitoring tools like promethus,datadog,dynatrace etc.
-An in memory monitoring app is knowm as metrics server.Below are the few commands for the same.
+
+Kubernetes internally doesnt have a monitoring solution .We must do it by integrating it with other monitoring tools
+like promethus,datadog,dynatrace etc. An in memory monitoring app is knowm as metrics server.Below are the few commands
+for the same.
 
 ```commandline
 root@controlplane:~# git clone https://github.com/kodekloudhub/kubernetes-metrics-server.git
@@ -1538,9 +1566,10 @@ root@controlplane:~#
 
 ### Volumes
 
-Every pod/docker container is transient in nature meaning they live for a very short period of time and then get deleted.
-If the container gets deleted the underlying data generated by the container will also get deleted.To solve this we use the concept of 
-volumes to persist the data so that even if  the container/pod goes down the data doesnt get deleted.
+Every pod/docker container is transient in nature meaning they live for a very short period of time and then get
+deleted. If the container gets deleted the underlying data generated by the container will also get deleted.To solve
+this we use the concept of volumes to persist the data so that even if the container/pod goes down the data doesnt get
+deleted.
 
 Example of a pod with volume-mount:
 
@@ -1548,30 +1577,30 @@ Example of a pod with volume-mount:
 apiVersion: v1
 kind: Pod
 metadata:
- name: postgres
- labels:
-   tier: db-tier
+  name: postgres
+  labels:
+    tier: db-tier
 spec:
- containers:
-   - name: postgres
-     image: postgres
-     ports:
-     - containerPort: 5432
-     env:
+  containers:
+    - name: postgres
+      image: postgres
+      ports:
+        - containerPort: 5432
+      env:
         - name: POSTGRES_PASSWORD
           value: mysecretpassword
-     volumeMounts:
-       - name: postgres-vol
-         mountPath: /var/lib/postgresql
- volumes:
+      volumeMounts:
+        - name: postgres-vol
+          mountPath: /var/lib/postgresql
+  volumes:
     - name: postgres-vol
       hostPath:
         path: /home/postgres/vol
         type: DirectoryOrCreate
 ```
 
-But this is not recommended in a multi-node cluster.For that you need to use Storage solutions like GCS,AWS-EBS,AZURE FILEetc.
-Ex :
+But this is not recommended in a multi-node cluster.For that you need to use Storage solutions like GCS,AWS-EBS,AZURE
+FILEetc. Ex :
 
 ```yaml
 volumes:
@@ -1583,30 +1612,32 @@ volumes:
 
 #### Persistence Volumes
 
-If there are huge no of applications to be deployed using pods ,it will become difficult for them to provide volume mounts within the pod-def file.
-This is resolved by Persistent Volumes or PV's.
-A PV is a cluster wide pool of storage vols configured by admin to be used by users deploying apps on the cluster,The users can now select storage from
-this pool using  Persistence Volume Claims.
+If there are huge no of applications to be deployed using pods ,it will become difficult for them to provide volume
+mounts within the pod-def file. This is resolved by Persistent Volumes or PV's. A PV is a cluster wide pool of storage
+vols configured by admin to be used by users deploying apps on the cluster,The users can now select storage from this
+pool using Persistence Volume Claims.
 
 Ex of PVC def file:
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
- name: pv-vol
+  name: pv-vol
 spec:
- accessModes:
-   - ReadWriteOnce
- capacity:
-     storage: 1Gi
- hostPath:
-     path: /data
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /data
 ```
+
 #### Persistence Volume Claim
 
 PVC's are created by users and PV's are created by admins.Once the PVC is created kubernetes binds the PVC with the PV.
-Every PVC is bound to single PV after checking the PV having sufficient capacity as requested by the claim.If there are multiple 
-matches for a single claim then we can spcify labels and filter for a specific PV.
+Every PVC is bound to single PV after checking the PV having sufficient capacity as requested by the claim.If there are
+multiple matches for a single claim then we can spcify labels and filter for a specific PV.
 
 Example of PVC:
 
@@ -1614,20 +1645,22 @@ Example of PVC:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
- name: pvc-claim
+  name: pvc-claim
 spec:
- accessModes:
-   - ReadWriteOnce
- resources:
+  accessModes:
+    - ReadWriteOnce
+  resources:
     requests:
-        storage: 500Mi
+      storage: 500Mi
 ```
-Once the above PVC is created since it matches with the above PV it gets bound to that PV. If a PVC is deleted,the PV is 
+
+Once the above PVC is created since it matches with the above PV it gets bound to that PV. If a PVC is deleted,the PV is
 retained by default,but can be changed to either delete/recycle
 
 ##### Using PVC's in Pods/Deployments/Replicasets
 
 For Pod:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1638,55 +1671,59 @@ spec:
     - name: myfrontend
       image: nginx
       volumeMounts:
-      - mountPath: "/var/www/html"
-        name: mypd
+        - mountPath: "/var/www/html"
+          name: mypd
   volumes:
     - name: mypd
       persistentVolumeClaim:
         claimName: myclaim
 ```
-For Deployment/Rs: 
+
+For Deployment/Rs:
 It is the same as pod for both deployment/R-S.
 
 ### Storage Classes
 
-Storage Classes in Kubernetes are used for Dynamic PV provisioning.Instaed of creating a PV file for an already existing volume,
-we can create storage class using a provisioner and it will create a volume at runtime.
+Storage Classes in Kubernetes are used for Dynamic PV provisioning.Instaed of creating a PV file for an already existing
+volume, we can create storage class using a provisioner and it will create a volume at runtime.
 
 Ex: Storage Class
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: PersistentVolumeClaim
 metadata:
- name: google-storage
+  name: google-storage
 provisioner: kubernetes.io/gce-pd # different for different types of volumes
 parameters:
-    type: pd
-    replication-type: none
+  type: pd
+  replication-type: none
 ```
 
 Ex Pod:
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
- name: pvc-claim
+  name: pvc-claim
 spec:
- accessModes:
-   - ReadWriteOnce
- storageClassName: google-storage
- resources:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: google-storage
+  resources:
     requests:
-        storage: 500Mi
+      storage: 500Mi
 ```
 
 ### Stateful Sets
 
-Using Stateful sets pods are created in sequential order .After one pod is up and running the other pod is created.We need
-a stateful set only if the instances need a stable name (or) the instances need to come up in ana order.Mostly used for database instances.
-Stateful set def file is same as deployment def file.
+Using Stateful sets pods are created in sequential order .After one pod is up and running the other pod is created.We
+need a stateful set only if the instances need a stable name (or) the instances need to come up in ana order.Mostly used
+for database instances. Stateful set def file is same as deployment def file.
 
-Example: 
+Example:
+
 ```yaml
 apiVersion: apps/v1
 kind: StatefulSet
@@ -1716,6 +1753,221 @@ spec:
   serviceName:postgres-h #need to add headless service
 ```
 
-Once a statefulset is created all the pods are created one after the other --odered graceful deployment
-Each pod gets a unique stable DNS name.
+Once a statefulset is created all the pods are created one after the other --odered graceful deployment Each pod gets a
+unique stable DNS name.
 
+### Helm
+Helm is a kubernetes package manager similar to apt for ubuntu and yum for centOS. Helm uses a packaging format called charts.
+A chart is a collection of the resource definitions necessary to run an application, tool, or service inside of a Kubernetes cluster .
+It allows describing the application structure through convenient helm-charts and managing it with simple commands.Using this we can package an 
+application--like Kafka or Apache HTTP, for example--in a format that anyone else can deploy on a Kubernetes cluster
+with just a few commands, while making few or no manual changes to YAML files.Helm uses Go templates for templating your resource files
+
+#### Installing Helm
+Below are the commands for installing Helm:
+
+```commandline
+kmaster@ubuntu:~/pods$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+
+kmaster@ubuntu:~/pods$ chmod 700 get_helm.sh
+
+kmaster@ubuntu:~/pods$ ./get_helm.sh
+Downloading https://get.helm.sh/helm-v3.7.2-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+[sudo] password for kmaster:
+helm installed into /usr/local/bin/helm
+
+kmaster@ubuntu:~/pods$ helm  version
+version.BuildInfo{Version:"v3.7.2", GitCommit:"663a896f4a815053445eec4153677ddc24a0a361", GitTreeState:"clean", GoVersion:"go1.16.10"}
+
+```
+
+#### Helm Commands
+
+1. Create a helm chart
+
+```commandline
+kmaster@ubuntu:~/helm$ helm create sample-app
+Creating sample-app
+kmaster@ubuntu:~/helm$
+```
+
+2. To view Helm chart structure
+
+```commandline
+kmaster@ubuntu:~/helm$ ls
+sample-app
+
+kmaster@ubuntu:~/helm$ cd sample-app/
+kmaster@ubuntu:~/helm/sample-app$ tree .
+.
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── NOTES.txt
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests
+│       └── test-connection.yaml
+└── values.yaml
+
+3 directories, 10 files
+```
+3. Update the values.yaml file with the respective values and then check for the rendering of the values using
+
+```commandline
+kmaster@ubuntu:~/helm$ helm template sample-app sample-app
+---
+# Source: sample-app/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sample-app
+  labels:
+    helm.sh/chart: sample-app-0.1.0
+    app.kubernetes.io/name: sample-app
+    app.kubernetes.io/instance: sample-app
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: sample-app/templates/deployment.yaml
+# Secret to store db creds
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg-creds
+data:
+  password: bXlzZWNyZXRwYXNzd29yZA==
+---
+# Source: sample-app/templates/deployment.yaml
+# creating a service to expose the deployment
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-service
+  labels:
+    type: database-service
+spec:
+  type: NodePort
+  ports:
+    - port: 5432 #service port
+      targetPort: 5432 #conatiner port
+      #nodePort: any val between (30000-32767) //optional
+  selector:
+    tier: db
+---
+# Source: sample-app/templates/deployment.yaml
+# creating a postgres db deployment manifest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: dev
+  labels:
+    tier: db
+spec:
+  template:
+    metadata:
+      name: postgres
+      labels:
+        tier: db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                # get envs from secrets
+                secretKeyRef:
+                  name: pg-creds
+                  key: password
+          volumeMounts:
+            - name: pg-vol
+              mountPath: /var/lib/postgresql
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "postgres" -h localhost -p 5432
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 8
+      volumes:
+        - name: pg-vol
+          hostPath:
+            path: /postgres/vol
+            type: DirectoryOrCreate
+  replicas: 3
+  selector:
+    matchLabels:
+       tier: db
+
+```
+
+4. Run the deployment using the helm install command
+
+```commandline
+kmaster@ubuntu:~/helm$ helm install sample-app sample-app
+NAME: sample-app
+LAST DEPLOYED: Fri Dec 24 07:58:08 2021
+NAMESPACE: dev
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+```
+
+5. Check for deployments
+
+```commandline
+kmaster@ubuntu:~/helm$ k get all
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/postgres-594b8f45cc-c9h55   1/1     Running   0          48s
+pod/postgres-594b8f45cc-hh9l8   1/1     Running   0          48s
+pod/postgres-594b8f45cc-jsglk   1/1     Running   0          48s
+
+NAME                 TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+service/pg-service   NodePort   10.245.9.200   <none>        5432:30721/TCP   48s
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/postgres   3/3     3            3           48s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/postgres-594b8f45cc   3         3         3       48s
+
+```
+
+6. List deployments done by helm
+
+```commandline
+kmaster@ubuntu:~/helm$ helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+sample-app      dev             1               2021-12-24 07:58:08.218632254 -0800 PST deployed        sample-app-0.1.0        1.16.0
+kmaster@ubuntu:~/helm$
+
+```
+
+7. Uninstall a chart
+
+```commandline
+kmaster@ubuntu:~/helm$ helm delete sample-app
+release "sample-app" uninstalled
+kmaster@ubuntu:~/helm$ k get all
+NAME                            READY   STATUS        RESTARTS   AGE
+pod/postgres-594b8f45cc-c9h55   0/1     Terminating   0          5m58s
+pod/postgres-594b8f45cc-hh9l8   0/1     Terminating   0          5m58s
+pod/postgres-594b8f45cc-jsglk   0/1     Terminating   0          5m58s
+kmaster@ubuntu:~/helm$
+
+```

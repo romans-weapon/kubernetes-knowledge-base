@@ -1,71 +1,86 @@
+# Secret to store db creds
 apiVersion: v1
 kind: Secret
 metadata:
-  name: postgres-secret
+  name: pg-creds
 data:
-  POSTGRES_USER: bXktYXBw
-  POSTGRES_PASSWORD: Mzk1MjgkdmRnN0pi
-
+  password: bXlzZWNyZXRwYXNzd29yZA==
 ---
-
+# creating a postgres db deployment manifest
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-db-deployment
+  name: postgres
+  namespace: dev
   labels:
     tier: db
 spec:
   template:
     metadata:
-      name: postgres-db-pod
+      name: postgres
       labels:
-        app: database
+        tier: db
     spec:
       containers:
         - name: postgres
           image: postgres:latest
           ports:
             - containerPort: 5432
-          envFrom:
-            - secrectRef:
-                  name: postgres-secret
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                # get envs from secrets
+                secretKeyRef:
+                  name: pg-creds
+                  key: password
           volumeMounts:
-             - name: postgres-vol
-               mountPath: /var/lib/postgresql
+            - name: pg-vol
+              mountPath: /var/lib/postgresql
           livenessProbe:
             exec:
               command:
-                 - /bin/sh
-                 - -c
-                 - exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "postgres" -h localhost -p 5432
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 8
-          tolerations:
-            - key: "dbs"
-              value: "postgres"
-              operator: "Equal"
-              effect: "NoSchedule"
+          resources:
+            requests:
+              memory: 200Mi
+              cpu: 100m
+            limits:
+              memory: 500Mi
+              cpu: 500m
       volumes:
-        - name: postgres-vol
+        - name: pg-vol
           hostPath:
-            path: /home/postgres/vol
+            path: /postgres/vol
             type: DirectoryOrCreate
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
-      app: database
+       tier: db
 
 ---
+# creating a service to expose the deployment
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-service
+  name: pg-service
+  labels:
+    type: database-service
 spec:
-  selector:
-    app: database
-  type: NodePort
+  type: LoadBalancer
   ports:
-    - targetPort: 5432
-      port: 5432
+    - port: 5432 #service port
+      targetPort: 5432 #conatiner port
+      #nodePort: any val between (30000-32767) //optional
+  selector:
+    tier: db
+
+        
+           
