@@ -10,6 +10,6 @@ Declarative guide on important concepts of docker and kubernetes with best pract
 ## Kubernetes
 1. A Guide to all the  Kubernetes concepts and important commands can be found [here](https://github.com/romans-weapon/kubernetes-knowledge-base/blob/main/notes/kubernetes/KubernetesGuide.md)
 2. Guide to install Kubernetes on Ubuntu can be found [here](https://github.com/romans-weapon/kubernetes-knowledge-base/blob/main/notes/kubernetes/KubernetesInstallationOnUbuntu.md)
-3. Examples to code like yaml definition files for pods/replicsets/deployments etc. can be found [here](https://github.com/romans-weapon/kubernetes-knowledge-base/tree/main/code/kubernetes)
+3. Examples to code like yaml definition files for pods/replica-sets/deployments etc. can be found [here](https://github.com/romans-weapon/kubernetes-knowledge-base/tree/main/code/kubernetes)
 
 
