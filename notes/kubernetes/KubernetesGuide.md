@@ -1,4 +1,4 @@
-# Container Orchestration
+# Container Orchestration And Kubernetes
 
 Container Orchestration automates the process of deployment, management, scaling, and networking of containers. Examples
 of Container Orchestration Technologies are:
@@ -7,61 +7,70 @@ of Container Orchestration Technologies are:
 2. Kubernetes
 3. Mesos
 
-The blow document consists of Kubernetes notes/cheat sheet and all the important concepts related to CKAD Certification
+The below document consists of Kubernetes notes/cheat sheet and all the important concepts related to CKAD Certification
+
 
 # Table of contents
 
-- [Container Orchestration](#container-orchestration)
-- [Table of contents](#table-of-contents)
 - [Kubernetes](#kubernetes)
     - [Definition](#definition)
     - [Architecture](#architecture)
     - [Components of kubernetes Control plane](#components-of-kubernetes-control-plane)
     - [Internal working](#internal-working)
     - [PODs](#pods)
+      - [Example](#example)
+      - [Some Pod commands](#some-pod-commands)
+      - [Inter-Pod communication](#inter-pod-communication)
+      - [MultiContainer Pods](#multicontainer-pods)
         - [Example](#example)
-        - [Some Pod commands](#some-pod-commands)
-        - [MultiContainer Pods](#multicontainer-pods)
-            - [Example](#example)
     - [Replica Sets](#replica-sets)
-        - [Example](#example)
-        - [Some ReplicaSet Commands](#some-replicaset-commands)
+      - [Example](#example)
+      - [Some ReplicaSet Commands](#some-replicaset-commands)
     - [Deployments](#deployments)
-        - [Example](#example)
-        - [Some Deployment Commands](#some-deployment-commands)
-        - [Updates and rollbacks to a deployment](#updates-and-rollbacks-to-a-deployment)
+      - [Example](#example)
+      - [Some Deployment Commands](#some-deployment-commands)
+      - [Updates and rollbacks to a deployment](#updates-and-rollbacks-to-a-deployment)
     - [Namespaces in kubernetes](#namespaces-in-kubernetes)
-        - [Example](#example)
-        - [Some Namespace Commands](#some-namespace-commands)
+      - [Example](#example)
+      - [Some Namespace Commands](#some-namespace-commands)
     - [Environment Variables](#environment-variables)
-        - [Plain key-value](#plain-key-value)
-        - [Config Maps](#config-maps)
-            - [Config map commands](#config-map-commands)
-        - [Secrets](#secrets)
-            - [Secrets-commands](#secrets-commands)
+      - [Plain key-value](#plain-key-value)
+      - [Config Maps](#config-maps)
+        - [Config map commands](#config-map-commands)
+      - [Secrets](#secrets)
+        - [Secrets-commands](#secrets-commands)
     - [Security Context in Kubernetes](#security-context-in-kubernetes)
     - [Resource Requirements](#resource-requirements)
     - [Taints and Toleration](#taints-and-toleration)
-        - [Taint commands example](#taint-commands-example)
+      - [Taint commands example](#taint-commands-example)
     - [Node Selectors and Node Affinity](#node-selectors-and-node-affinity)
     - [Kubernetes Services](#kubernetes-services)
-        - [Types of services](#types-of-services)
-            - [Node Port Service](#node-port-service)
-            - [Cluster IP Service](#cluster-ip-service)
-            - [LoadBalancer Service](#loadbalancer-service)
+      - [Types of services](#types-of-services)
+        - [Node Port Service](#node-port-service)
+        - [Cluster IP Service](#cluster-ip-service)
+        - [LoadBalancer Service](#loadbalancer-service)
     - [Networking in Kubernetes](#networking-in-kubernetes)
-        - [Network Policies](#network-policies)
+      - [Network Policies](#network-policies)
     - [Observability](#observability)
-        - [Readiness Probes](#readiness-probes)
-        - [Liveness Probes](#liveness-probes)
+      - [Readiness Probes](#readiness-probes)
+      - [Liveness Probes](#liveness-probes)
     - [Logging in Kubernetes](#logging-in-kubernetes)
     - [Monitoring](#monitoring)
     - [Volumes](#volumes)
-        - [Persistence Volumes](#persistence-volumes)
-        - [Persistence Volume Claim](#persistence-volume-claim)
-            - [Using PVC's in Pods/Deployments/Replicasets](#using-pvcs-in-podsdeploymentsreplicasets)
+      - [Persistence Volumes](#persistence-volumes)
+      - [Persistence Volume Claim](#persistence-volume-claim)
+        - [Using PVC's in Pods/Deployments/Replicasets](#using-pvcs-in-podsdeploymentsreplicasets)
     - [Storage Classes](#storage-classes)
     - [Stateful Sets](#stateful-sets)
+        - [Headless service](#headless-service)
+        - [Example](#example)
+    - [Security In Kubernetes](#security-in-kubernetes)
+        - [KubeConfig](#kubeconfig)
+        - [Authorization](#authorization)
+        - [Check Access](#check-access)
+    - [Helm](#helm)
+      - [Installing Helm](#installing-helm)
+      - [Helm Commands](#helm-commands)
 
 # Kubernetes
 
@@ -356,8 +365,41 @@ pod/postgres created edited
 ```commandline
 kubectl run nginx --image=nginx --dry-run=client -o yaml
 
-kubectl create deployment --image=nginx nginx --dry-run -o yaml
 ```
+
+#### Inter-Pod communication
+
+All pods within a cluster can communicate with each other using the internal ip address as shown below:
+
+```commandline
+1. As shown below ,there are three nodes in the cluster 
+kmaster@ubuntu:~$ kubectl get nodes -o wide
+NAME                   STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP       OS-IMAGE                       KERNEL-VERSION          CONTAINER-RUNTIME
+pool-vatgnc8pt-utmzb   Ready    <none>   85m   v1.21.5   10.122.0.3    206.189.139.191   Debian GNU/Linux 10 (buster)   4.19.0-17-cloud-amd64   containerd://1.4.11
+pool-vatgnc8pt-utmzj   Ready    <none>   85m   v1.21.5   10.122.0.5    142.93.211.114    Debian GNU/Linux 10 (buster)   4.19.0-17-cloud-amd64   containerd://1.4.11
+pool-vatgnc8pt-utmzr   Ready    <none>   85m   v1.21.5   10.122.0.4    142.93.214.121    Debian GNU/Linux 10 (buster)   4.19.0-17-cloud-amd64   containerd://1.4.11
+
+2. The two nginx pods are created on differnt nodes as shown below
+kmaster@ubuntu:~$ kubectl get pods -o wide
+NAME      READY   STATUS    RESTARTS   AGE   IP             NODE                   NOMINATED NODE   READINESS GATES
+nginx     1/1     Running   0          78m   10.244.0.120   pool-vatgnc8pt-utmzj   <none>           <none>
+nginx-2   1/1     Running   0          76m   10.244.1.169   pool-vatgnc8pt-utmzb   <none>           <none>
+
+3. We are able to communicate/connect to the firt pod from the 2nd pod and vice-versa using ip adress
+kmaster@ubuntu:~$ k exec -it nginx-2 -- /bin/bash
+root@nginx-2:/# telnet 10.244.0.120 80 #optionally we can use pod DNS 10-244-0-120.default.pod.cluster.local
+Trying 10.244.0.120...
+Connected to 10.244.0.120.
+Escape character is '^]'.
+^C
+kmaster@ubuntu:~$ k exec -it nginx -- /bin/bash
+root@nginx:/# telnet 10.244.1.169 80
+Trying 10.244.1.169...
+Connected to 10.244.1.169.
+Escape character is '^]'.
+
+```
+
 
 #### MultiContainer Pods
 
@@ -1750,11 +1792,153 @@ spec:
   selector:
     matchLabels:
       tier: db-tier
-  serviceName:postgres-h #need to add headless service
+  serviceName: postgres-h #need to add headless service name
 ```
 
-Once a statefulset is created all the pods are created one after the other --odered graceful deployment Each pod gets a
+Once a stateful-set is created all the pods are created one after the other i.e.., ordered graceful deployment Each pod gets a
 unique stable DNS name.
+
+##### Headless service
+A headless service is created as a normal service which has no ip of its own like a clusterIP in case of normal service.It doesn't
+so any load-balancing but provides a DNS entry for each pod using pod name and sub-domain.
+Whenever we create an headless service using some name ex:mysql-h, a DNS entry will be given to each pod in the format
+<pod_name>.<headless-service-name>.<namespace>.svc.cluster.local (in this case mysql-pod.mysql-h.default.svc.cluster.local).Creation
+of a headless service is shown below:
+
+##### Example
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service-h
+spec:
+  ports:
+    - port: 80 #Mandatory(port of the service)
+  selector:
+    app: my-app 
+  clusterIP: None
+```
+###### Pod-Def
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app
+spec:
+  conatiners:
+    - name: app
+      image: app-image
+  subdomain: my-service-h # same as name of headless service
+  hostname: myapp-pod
+```
+Using the above two def files a static DNS (myapp-pod.my-service-h.default.svc.cluster.local) will be created for the pod 
+
+### Security In Kubernetes
+
+Controlling access to kube-api server as it is the center of all kubernetes operations.
+   a. Who can authenticate to the aip-server?
+   b. What can they do after getting access (authorization)?
+
+By default all pods can communicate with all other pods and this can be controlled using Network policies.
+All user access in kubernetes is managed by kubeapi-server. When a request is made to kube-api server ,it
+authenticates the request before processing it. The different forms of authentication are using 
+1. csv files with users 2. token files 3. certs etc. Example of a production cluster access is shown below
+```commandline
+kubectl get pods --kubeconfig config
+```
+The config file contains
+```commandline
+--server <server-name>
+--client-key admin.key
+--client-certificate
+--cert-authority ca.crt
+```
+This file is created in the $HOME/.kube/config ,then we need tot give the kubeconfig option in the kubectl.
+
+##### KubeConfig
+The kubeconfig file has the  following :
+1. Clusters
+2. Contexts
+3. Users
+   
+![img.png](../images/kubeconfig.png)
+
+Below commands are used while working with kube config:
+
+```commandline
+kmaster@ubuntu:~/.kube$ kubectl config view --kubeconfig=<path of custom config>
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: DATA+OMITTED
+    server: https://192.168.0.105:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: kubernetes-admin
+  user:
+    client-certificate-data: REDACTED
+    client-key-data: REDACTED
+kmaster@ubuntu:~/.kube$ kubectl config -h   
+Available Commands:
+  current-context Display the current-context
+  delete-cluster  Delete the specified cluster from the kubeconfig
+  delete-context  Delete the specified context from the kubeconfig
+  delete-user     Delete the specified user from the kubeconfig
+  get-clusters    Display clusters defined in the kubeconfig
+  get-contexts    Describe one or many contexts
+  get-users       Display users defined in the kubeconfig
+  rename-context  Rename a context from the kubeconfig file
+  set             Set an individual value in a kubeconfig file
+  set-cluster     Set a cluster entry in kubeconfig
+  set-context     Set a context entry in kubeconfig
+  set-credentials Set a user entry in kubeconfig
+  unset           Unset an individual value in a kubeconfig file
+  use-context     Set the current-context in a kubeconfig file
+  view            Display merged kubeconfig settings or a specified kubeconfig file
+
+Usage:
+  kubectl config SUBCOMMAND [options]
+```
+
+##### Authorization
+All the different groups admins/dev team must not have the same access.For this we need authorization
+There are different authorization mechs:
+1. Node Authorization
+2. ABAC
+3. RBAC
+4. WebHook
+
+##### Check Access
+
+1. To check whether we can perform a particular action on kubernetes cluster 
+```commandline
+kmaster@ubuntu:~/.kube$ kubectl auth can-i create deployments
+yes
+kmaster@ubuntu:~/.kube$ kubectl auth can-i delete nodes
+Warning: resource 'nodes' is not namespace scoped
+yes
+kmaster@ubuntu:~/.kube$ kubectl auth can-i create pods
+yes
+kmaster@ubuntu:~/.kube$
+```
+
+2. Check whether a particular user has access to perform a specific action
+
+```commandline
+kmaster@ubuntu:~/.kube$ kubectl auth can-i create deployments --as kubernetes-admin
+no
+kmaster@ubuntu:~/.kube$ kubectl auth can-i create deployments --as kubernetes-admin --namespace kube-system
+no
+kmaster@ubuntu:~/.kube$
+```
 
 ### Helm
 Helm is a kubernetes package manager similar to apt for ubuntu and yum for centOS. Helm uses a packaging format called charts.
@@ -1969,5 +2153,4 @@ pod/postgres-594b8f45cc-c9h55   0/1     Terminating   0          5m58s
 pod/postgres-594b8f45cc-hh9l8   0/1     Terminating   0          5m58s
 pod/postgres-594b8f45cc-jsglk   0/1     Terminating   0          5m58s
 kmaster@ubuntu:~/helm$
-
 ```
