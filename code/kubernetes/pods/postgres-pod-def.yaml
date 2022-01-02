@@ -23,3 +23,10 @@ spec:
       hostPath:
         path: /home/postgres/vol
         type: DirectoryOrCreate
+    - name: aws-vol #Example for other volumes
+      awsElasticBlockStore:
+        volumeID: "<volume id>"
+        fsType: ext4
+    - name: pv-postgres
+      persistentVolumeClaim:
+        claimName: pg-claim

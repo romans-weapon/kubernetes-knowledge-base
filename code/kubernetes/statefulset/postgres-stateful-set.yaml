@@ -3,12 +3,13 @@ apiVersion: v1
 kind: Secret
 metadata:
   name   : pg-creds
+  namespace: dev
 data:
   password: bXlzZWNyZXRwYXNzd29yZA==
 ---
 # creating a postgres db deployment manifest
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: postgres
   namespace: dev
@@ -38,9 +39,9 @@ spec:
           volumeMounts:
             - name: pg-vol
               mountPath: /var/lib/postgresql
-          livenessProbe:
+          readinessProbe:
             exec:
-              command: ["psql", "-U", "postgres", "-d", "$POSTGRES_USER", "-c", "SELECT 1"]
+              command: ["psql", "-U", "postgres", "-d", "postgres", "-c", "SELECT 1"]
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 8
@@ -57,16 +58,17 @@ spec:
             path: /postgres/vol
             type: DirectoryOrCreate
   replicas: 3
+  serviceName: "postgres"
   selector:
     matchLabels:
        tier: db
 
 ---
 # creating a service to expose the deployment
-
 apiVersion: v1
 kind: Service
 metadata:
+  namespace: dev
   name: pg-service
   labels:
     type: database-service
@@ -75,9 +77,5 @@ spec:
   ports:
     - port: 5432 #service port
       targetPort: 5432 #conatiner port
-      #nodePort: any val between (30000-32767) //optional
   selector:
     tier: db
-
-        
-           
