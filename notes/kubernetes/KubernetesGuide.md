@@ -1359,6 +1359,8 @@ There are three types of services:
 2. ClusterIP -default service type
 3. LoadBalancer - used for a single point of contact when running in a cluster.
 
+![img.png](../images/service-types.png)
+
 ##### Node Port Service
 
 Example of a node-port service def file.
@@ -1395,7 +1397,48 @@ postgres-service   NodePort    10.43.202.235   <none>        5432:30008/TCP   8s
 ```
 
 NOTE: In any case i.e.., single pod on single node, multiple-pods on single node or multiple pods on multiple-nodes,the
-service is created the same way without the need to change anything.
+service is created the same way without the need to change anything. Example of Node port service id shown below:
+
+Example:
+```commandline
+kmaster@ubuntu:~/pods$ k get nodes -o wide
+NAME                   STATUS   ROLES    AGE     VERSION   INTERNAL-IP   EXTERNAL-IP      OS-IMAGE                       KERNEL-VERSION          CONTAINER-RUNTIME
+pool-p92zr5exd-utjg0   Ready    <none>   4h42m   v1.21.5   10.122.0.3    159.89.161.182   Debian GNU/Linux 10 (buster)   4.19.0-17-cloud-amd64   containerd://1.4.11
+pool-p92zr5exd-utjg1   Ready    <none>   4h42m   v1.21.5   10.122.0.4    128.199.28.82    Debian GNU/Linux 10 (buster)   4.19.0-17-cloud-amd64   containerd://1.4.11
+pool-p92zr5exd-utjgz   Ready    <none>   4h43m   v1.21.5   10.122.0.5    143.110.191.81   Debian GNU/Linux 10 (buster)   4.19.0-17-cloud-amd64   containerd://1.4.11
+kmaster@ubuntu:~/pods$ k get all -n dev -o wide
+NAME                            READY   STATUS    RESTARTS   AGE   IP             NODE                   NOMINATED NODE   READINESS GATES
+pod/postgres-594b8f45cc-64dvz   1/1     Running   0          13m   10.244.1.213   pool-p92zr5exd-utjg1   <none>           <none>
+pod/postgres-594b8f45cc-gln6w   1/1     Running   0          13m   10.244.1.189   pool-p92zr5exd-utjg1   <none>           <none>
+pod/postgres-594b8f45cc-lzg6f   1/1     Running   0          13m   10.244.1.47    pool-p92zr5exd-utjg0   <none>           <none>
+
+NAME                 TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE   SELECTOR
+service/pg-service   NodePort   10.245.209.203   <none>        5432:30739/TCP   13m   tier=db
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES            SELECTOR
+deployment.apps/postgres   3/3     3            3           13m   postgres     postgres:latest   tier=db
+
+NAME                                  DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES            SELECTOR
+replicaset.apps/postgres-594b8f45cc   3         3         3       13m   postgres     postgres:latest   pod-template-hash=594b8f45cc,tier=db
+kmaster@ubuntu:~/pods$ psql -U postgres -h 128.199.28.82 -p 30739
+Password for user postgres:
+psql (13.5 (Ubuntu 13.5-0ubuntu0.21.04.1), server 14.1 (Debian 14.1-1.pgdg110+1))
+WARNING: psql major version 13, server major version 14.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=# \q
+kmaster@ubuntu:~/pods$ psql -U postgres -h 159.89.161.182 -p 30739 # same port but different ip
+Password for user postgres:
+psql (13.5 (Ubuntu 13.5-0ubuntu0.21.04.1), server 14.1 (Debian 14.1-1.pgdg110+1))
+WARNING: psql major version 13, server major version 14.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=#
+
+
+```
 
 ##### Cluster IP Service
 
@@ -1406,10 +1449,102 @@ in the format
 <service_name>.<namespace>.<svc>.<domain_name> # myservice.default.svc.cluster.local and this DNS will be only resolved
 by pods/services within the cluster.
 
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-service
+  namespace: dev
+  labels:
+    type: database-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432 #service port
+  selector:
+    tier: db
+```
+
+```commandline
+kmaster@ubuntu:~/pods$ k get all -n dev -o wide
+NAME                            READY   STATUS    RESTARTS   AGE     IP             NODE                   NOMINATED NODE   READINESS GATES
+pod/postgres-594b8f45cc-64dvz   1/1     Running   0          51m     10.244.1.213   pool-p92zr5exd-utjg1   <none>           <none>
+pod/postgres-594b8f45cc-gln6w   1/1     Running   0          51m     10.244.1.189   pool-p92zr5exd-utjg1   <none>           <none>
+pod/postgres-594b8f45cc-lzg6f   1/1     Running   0          51m     10.244.1.47    pool-p92zr5exd-utjg0   <none>           <none>
+pod/ubuntu                      1/1     Running   0          3m44s   10.244.1.217   pool-p92zr5exd-utjg1   <none>           <none>
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE   SELECTOR
+service/pg-service   ClusterIP   10.245.209.203   <none>        5432/TCP   51m   tier=db
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES            SELECTOR
+deployment.apps/postgres   3/3     3            3           51m   postgres     postgres:latest   tier=db
+
+NAME                                  DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES            SELECTOR
+replicaset.apps/postgres-594b8f45cc   3         3         3       51m   postgres     postgres:latest   pod-template-hash=594b8f45cc,tier=db
+-- Same namespace--
+//creating a ubuntu pod in the same namespace and trying to connect to the service from the ubuntu pod
+kmaster@ubuntu:~/pods$ k exec -it ubuntu -n dev -- /bin/bash
+root@ubuntu:/# psql -U postgres -h pg-service -p 5432 # using service name
+Password for user postgres:
+psql (12.9 (Ubuntu 12.9-0ubuntu0.20.04.1), server 14.1 (Debian 14.1-1.pgdg110+1))
+WARNING: psql major version 12, server major version 14.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=#\q
+root@ubuntu:/# exit
+exit
+
+kmaster@ubuntu:~/pods$ k exec -it ubuntu -n dev -- /bin/bash
+root@ubuntu:/# psql -U postgres -h pg-service.dev.svc.cluster.local -p 5432 #using DNS name
+Password for user postgres:
+psql (12.9 (Ubuntu 12.9-0ubuntu0.20.04.1), server 14.1 (Debian 14.1-1.pgdg110+1))
+WARNING: psql major version 12, server major version 14.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=#
+
+-- connecting from different namespace --
+//creating a ubuntu pod in the default namespace and trying to connect to the service from the ubuntu pod
+
+kmaster@ubuntu:~/pods$ k get pods
+NAME       READY   STATUS    RESTARTS   AGE
+postgres   1/1     Running   0          5h18m
+ubuntu     1/1     Running   0          2m7s
+kmaster@ubuntu:~/pods$ k get all -n dev -o wide
+NAME                            READY   STATUS    RESTARTS   AGE   IP             NODE                   NOMINATED NODE   READINESS GATES
+pod/postgres-594b8f45cc-64dvz   1/1     Running   0          77m   10.244.1.213   pool-p92zr5exd-utjg1   <none>           <none>
+pod/postgres-594b8f45cc-gln6w   1/1     Running   0          77m   10.244.1.189   pool-p92zr5exd-utjg1   <none>           <none>
+pod/postgres-594b8f45cc-lzg6f   1/1     Running   0          77m   10.244.1.47    pool-p92zr5exd-utjg0   <none>           <none>
+pod/ubuntu                      1/1     Running   0          29m   10.244.1.217   pool-p92zr5exd-utjg1   <none>           <none>
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE   SELECTOR
+service/pg-service   ClusterIP   10.245.209.203   <none>        5432/TCP   77m   tier=db
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES            SELECTOR
+deployment.apps/postgres   3/3     3            3           77m   postgres     postgres:latest   tier=db
+
+NAME                                  DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES            SELECTOR
+replicaset.apps/postgres-594b8f45cc   3         3         3       77m   postgres     postgres:latest   pod-template-hash=594b8f45cc,tier=db
+kmaster@ubuntu:~/pods$ k exec -it ubuntu  -- /bin/bash
+root@ubuntu:/# psql -U postgres -h pg-service -d 5432 # will not work as it is in other namespace
+^C
+root@ubuntu:/# psql -U postgres -h pg-service.dev.svc.cluster.local -p 5432 #to access a service from another namespace we must use the dns for the service 
+Password for user postgres:
+psql (12.9 (Ubuntu 12.9-0ubuntu0.20.04.1), server 14.1 (Debian 14.1-1.pgdg110+1))
+WARNING: psql major version 12, server major version 14.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=#
+
+```
+
 ##### LoadBalancer Service
 
-Example of a LoadBalancer service def file. A load balancer service creates an EXTERNALIP instaed of internal ip which
-is created in case of ClusterIp service
+Example of a LoadBalancer service def file. A load balancer service creates an EXTERNAL IP in addition with  internal ip which
+is created in case of ClusterIp service.
 
 ```yaml
 apiVersion: v1
@@ -1424,6 +1559,35 @@ spec:
   selector:
     app: my-app # all the pods with the same label will be grouped and service will act as a load balancer an uses random algorithm to forward the request.
 ```
+Example:
+
+```commandline
+kmaster@ubuntu:~/pods$ k get all -n dev -o wide
+NAME                            READY   STATUS    RESTARTS   AGE   IP             NODE                   NOMINATED NODE   READINESS GATES
+pod/postgres-594b8f45cc-64dvz   1/1     Running   0          90m   10.244.1.213   pool-p92zr5exd-utjg1   <none>           <none>
+pod/postgres-594b8f45cc-gln6w   1/1     Running   0          90m   10.244.1.189   pool-p92zr5exd-utjg1   <none>           <none>
+pod/postgres-594b8f45cc-lzg6f   1/1     Running   0          90m   10.244.1.47    pool-p92zr5exd-utjg0   <none>           <none>
+pod/ubuntu                      1/1     Running   0          42m   10.244.1.217   pool-p92zr5exd-utjg1   <none>           <none>
+
+NAME                 TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)          AGE   SELECTOR
+service/pg-service   LoadBalancer   10.245.209.203   139.59.52.207   5432:30048/TCP   90m   tier=db
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES            SELECTOR
+deployment.apps/postgres   3/3     3            3           90m   postgres     postgres:latest   tier=db
+
+NAME                                  DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES            SELECTOR
+replicaset.apps/postgres-594b8f45cc   3         3         3       90m   postgres     postgres:latest   pod-template-hash=594b8f45cc,tier=db
+kmaster@ubuntu:~/pods$ psql -U postgres -h 139.59.52.207
+Password for user postgres:
+psql (13.5 (Ubuntu 13.5-0ubuntu0.21.04.1), server 14.1 (Debian 14.1-1.pgdg110+1))
+WARNING: psql major version 13, server major version 14.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=#
+
+```
+
 
 ### Networking in Kubernetes
 
@@ -1436,11 +1600,11 @@ There are two types of traffic flowing between different services in a na applic
 Egress/Outbound
 ![img.png](../images/ingressegress.png)
 
-Networking policies are rules which specify which ports to open for allowing traffic and send traffic.All pods in a
-netork can communicate with each other with their ip addresses even though they are on different nodes of the
+Networking policies are rules which specify which ports to open for allowing traffic and sending traffic.All pods in a
+network can communicate with each other with their ip addresses even though they are on different nodes of the
 cluster.Kubernetes is configured by all-allow rule which allows traffic from any pod to any other pod in the
 cluster.These are enforced by the networks implemented in the kubernetes cluster like calico/kube-router/etc. Flannel
-doesnt support NetworkPolicy. You can specify rules with the help of network policy and attach them to your pod.\
+doesn't support NetworkPolicy. You can specify rules with the help of network policy and attach them to your pod.
 
 Example:
 
