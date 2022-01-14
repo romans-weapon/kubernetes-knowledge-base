@@ -1588,6 +1588,17 @@ postgres=#
 
 ```
 
+#### Imperative command for service
+
+```commandline
+kmaster@ubuntu:~$ k expose pod my-app-7cbb8cf874-6gtjw --port=80 --target-port=80 --name=test-service-1
+service/test-service-1 exposed
+kmaster@ubuntu:~$
+
+kmaster@ubuntu:~$ k expose deploy redis --port=80 --target-port=80 --name=test-service-1
+service/test-service-1 exposed
+kmaster@ubuntu:~$
+```
 
 ### Networking in Kubernetes
 
@@ -1728,8 +1739,8 @@ kubectl logs -f <pod_name> <conatiner_name> #for multi conatiner pods
 
 ### Monitoring
 
-Kubernetes internally doesnt have a monitoring solution .We must do it by integrating it with other monitoring tools
-like promethus,datadog,dynatrace etc. An in memory monitoring app is knowm as metrics server.Below are the few commands
+Kubernetes internally doesn't have a monitoring solution .We must do it by integrating it with other monitoring tools
+like prometheus,datadog,dynatrace etc. An in memory monitoring app  known as metrics server.Below are the few commands
 for the same.
 
 ```commandline

@@ -7,7 +7,7 @@ metadata:
 data:
   password: bXlzZWNyZXRwYXNzd29yZA==
 ---
-# creating a postgres db deployment manifest
+# creating a postgres db  Headless service for stable DNS entries of StatefulSet members.
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -58,13 +58,13 @@ spec:
             path: /postgres/vol
             type: DirectoryOrCreate
   replicas: 3
-  serviceName: "postgres"
+  serviceName: "pg-service"
   selector:
     matchLabels:
        tier: db
 
 ---
-# creating a service to expose the deployment
+# creating an headless service to expose the deployment
 apiVersion: v1
 kind: Service
 metadata:
@@ -73,9 +73,9 @@ metadata:
   labels:
     type: database-service
 spec:
-  type: LoadBalancer
   ports:
     - port: 5432 #service port
       targetPort: 5432 #conatiner port
+  clusterIP: None
   selector:
     tier: db

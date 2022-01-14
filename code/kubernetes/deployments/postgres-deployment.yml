@@ -62,8 +62,7 @@ spec:
        tier: db
 
 ---
-# creating a service to expose the deployment
-
+# creating a Load Balance service to expose the deployment
 apiVersion: v1
 kind: Service
 metadata:
