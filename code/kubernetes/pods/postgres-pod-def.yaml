@@ -30,3 +30,5 @@ spec:
     - name: pv-postgres
       persistentVolumeClaim:
         claimName: pg-claim
+    - name: empty-dir-vol
+      emptyDir: {}

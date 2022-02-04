@@ -1817,7 +1817,7 @@ spec:
 ```
 
 But this is not recommended in a multi-node cluster.For that you need to use Storage solutions like GCS,AWS-EBS,AZURE
-FILEetc. Ex :
+FILE etc. Ex :
 
 ```yaml
 volumes:
@@ -2328,4 +2328,36 @@ pod/postgres-594b8f45cc-c9h55   0/1     Terminating   0          5m58s
 pod/postgres-594b8f45cc-hh9l8   0/1     Terminating   0          5m58s
 pod/postgres-594b8f45cc-jsglk   0/1     Terminating   0          5m58s
 kmaster@ubuntu:~/helm$
+```
+
+8.Upgrade a release
+
+```commandline
+➜ helm repo list
+NAME    URL                               
+bitnami https://charts.bitnami.com/bitnami
+
+➜ helm repo update
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "bitnami" chart repository
+Update Complete. ⎈Happy Helming!⎈
+
+➜ helm search repo nginx
+NAME                  CHART VERSION   APP VERSION     DESCRIPTION          
+bitnami/nginx   
+
+➜ helm -n mercury upgrade internal-issue-report-apiv2 bitnami/nginx
+Release "internal-issue-report-apiv2" has been upgraded. Happy Helming!
+NAME: internal-issue-report-apiv2
+LAST DEPLOYED: Tue Aug 31 17:40:42 2021
+NAMESPACE: mercury
+STATUS: deployed
+REVISION: 2
+TEST SUITE: None
+```
+
+8. Undo an upgrade
+
+```commandline
+-> helm rollback nternal-issue-report-apiv2
 ```
